@@ -1,0 +1,6 @@
+{
+  "id": "goliath",
+  "name": "goliath",
+  "version": "${version}",
+  "main": "ch.mcserver.goliath.Goliath"
+}
