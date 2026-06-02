@@ -1,26 +1,25 @@
 package ch.mcserver.goliath;
 
-import ch.mcserver.goliath.command.GoliathCommand;
-import ch.mcserver.goliath.command.goliath;
-import ch.mcserver.goliath.command.permissions.giveMeta;
-import ch.mcserver.goliath.command.sfstuff.gmspCommand;
-import ch.mcserver.goliath.command.sfstuff.moderation.GoliathTeleport;
-import ch.mcserver.goliath.command.sfstuff.moderation.offend.*;
-import ch.mcserver.goliath.command.sfstuff.sfmodeCommand;
-import ch.mcserver.goliath.command.whereAmI;
-import ch.mcserver.goliath.database.MongoDBManager;
-import ch.mcserver.goliath.database.MySQLManager;
-import ch.mcserver.goliath.database.repository.mysql.PlayerRepository;
-import ch.mcserver.goliath.database.repository.mongodb.HistoryEventRepository;
-import ch.mcserver.goliath.goliathfeatures.history.EventListener;
-import ch.mcserver.goliath.goliathfeatures.history.HistroyLogTypes;
+import ch.mcserver.goliath.command.admin.GoliathCommand;
+import ch.mcserver.goliath.command.admin.GiveMediaCommand;
+import ch.mcserver.goliath.command.moderation.*;
+import ch.mcserver.goliath.command.staff.GmspCommand;
+import ch.mcserver.goliath.command.staff.SfModeCommand;
+import ch.mcserver.goliath.command.utility.WhereAmICommand;
+import ch.mcserver.goliath.database.mongodb.MongoDBManager;
+import ch.mcserver.goliath.database.mysql.MySQLManager;
+import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
+import ch.mcserver.goliath.database.mongodb.repository.HistoryEventRepository;
+import ch.mcserver.goliath.history.HistoryEventListener;
+import ch.mcserver.goliath.history.HistroyLogTypes;
 import ch.mcserver.goliath.listener.CommandBlocker;
 import ch.mcserver.goliath.listener.CommandHider;
-import ch.mcserver.goliath.listener.gmspServerSwitch;
+import ch.mcserver.goliath.listener.GmspServerSwitchListener;
 import ch.mcserver.goliath.player.ProxyPlayerManager;
-import ch.mcserver.goliath.pluginMessanger.GmspMessenger;
-import ch.mcserver.goliath.pluginMessanger.GoliathTeleportMessenger;
-import ch.mcserver.goliath.pluginMessanger.SnapshotRequestManager;
+import ch.mcserver.goliath.pluginmessage.GmspMessenger;
+import ch.mcserver.goliath.pluginmessage.GoliathTeleportMessenger;
+import ch.mcserver.goliath.history.SnapshotRequestManager;
+import ch.mcserver.goliath.listener.PunishmentConnectListener;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -102,9 +101,9 @@ public class Goliath {
         proxy.getEventManager().register(this, new ProxyPlayerManager());
         proxy.getEventManager().register(this, new CommandHider());
         proxy.getEventManager().register(this, new CommandBlocker());
-        proxy.getEventManager().register(this, new JoinListener());
-        proxy.getEventManager().register(this, new gmspServerSwitch(proxy, this, gmspMessenger));
-        proxy.getEventManager().register(this, new EventListener(historyLogTypes));
+        proxy.getEventManager().register(this, new PunishmentConnectListener());
+        proxy.getEventManager().register(this, new GmspServerSwitchListener(proxy, this, gmspMessenger));
+        proxy.getEventManager().register(this, new HistoryEventListener(historyLogTypes));
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("goliath").plugin(this).build(),
@@ -113,22 +112,22 @@ public class Goliath {
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("whereami").plugin(this).build(),
-                new whereAmI(proxy)
+                new WhereAmICommand(proxy)
         );
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("giveMedia").aliases("goliath:giveMedia").plugin(this).build(),
-                new giveMeta(proxy)
+                new GiveMediaCommand(proxy)
         );
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("sfmode").plugin(this).build(),
-                new sfmodeCommand(proxy)
+                new SfModeCommand(proxy)
         );
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("gmsp").plugin(this).build(),
-                new gmspCommand(gmspMessenger, proxy)
+                new GmspCommand(gmspMessenger, proxy)
         );
 
         proxy.getCommandManager().register(
@@ -138,22 +137,22 @@ public class Goliath {
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("checkban").aliases("goliath:checkban").plugin(this).build(),
-                new CheckBan()
+                new CheckBanCommand()
         );
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("ban").aliases("goliath:ban").plugin(this).build(),
-                new Ban(proxy)
+                new BanCommand(proxy)
         );
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("unban").aliases("goliath:unban").plugin(this).build(),
-                new Unban()
+                new UnbanCommand()
         );
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("gtp").aliases("goliath:gtp").plugin(this).build(),
-                new GoliathTeleport(proxy)
+                new GoliathTeleportCommand(proxy)
         );
     }
 
