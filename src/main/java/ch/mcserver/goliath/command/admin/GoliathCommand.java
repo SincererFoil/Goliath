@@ -75,14 +75,14 @@ public class GoliathCommand implements SimpleCommand {
         if (invocation.arguments().length == 2) {
             if (invocation.arguments()[0].equalsIgnoreCase("move")) {
                 List<String> suggestions = List.of(
-                        "GoliathCommand-dev",
-                        "GoliathCommand-devv",
-                        "GoliathCommand-ASH-spawn1",
-                        "GoliathCommand-ASH-spawn2",
-                        "GoliathCommand-ASH-spawn3",
-                        "GoliathCommand-ASH-spawn4",
-                        "GoliathCommand-ASH-spawn5",
-                        "GoliathCommand-ASH-spawn6"
+                        "goliath-dev",
+                        "goliath-devv",
+                        "goliath-ASH-spawn1",
+                        "goliath-ASH-spawn2",
+                        "goliath-ASH-spawn3",
+                        "goliath-ASH-spawn4",
+                        "goliath-ASH-spawn5",
+                        "goliath-ASH-spawn6"
                 );
                 return suggestions.stream().filter(s -> s.startsWith(invocation.arguments()[1].toLowerCase()))
                         .toList();

@@ -9,7 +9,7 @@ import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 public class GmspMessenger {
 
     public static final MinecraftChannelIdentifier CHANNEL =
-            MinecraftChannelIdentifier.from("GoliathCommand:gmsp");
+            MinecraftChannelIdentifier.from("goliath:gmsp");
 
     private final ProxyServer proxy;
 

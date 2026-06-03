@@ -45,13 +45,27 @@ public class FindPlayerCommand implements SimpleCommand {
         String rawServerName = server.getServerInfo().getName();
 
         if (!invocation.source().hasPermission("goliath.findplayer")) {
-            String serverNamePart = rawServerName.substring(rawServerName.indexOf("-" + 1));
-            String serverName = serverNamePart.replaceAll("\\d+$", "");
-            invocation.source().sendMessage(Component.text(targetName + "'s in the " + serverName));
+            String lower = rawServerName.toLowerCase();
+
+            String serverName = "overworld";
+
+            if (lower.contains("nether")) {
+                serverName = "nether";
+            } else if (lower.contains("end")) {
+                serverName = "end";
+            }
+
+            invocation.source().sendMessage(
+                    Component.text(targetName + "'s in the ", NamedTextColor.WHITE)
+                            .append(Component.text(serverName, NamedTextColor.AQUA))
+            );
             return;
         }
-        invocation.source().sendMessage(Component.text(targetName + "'s in the ", NamedTextColor.WHITE).append(Component.text(rawServerName, NamedTextColor.AQUA)));
-        return;
+
+        invocation.source().sendMessage(
+                Component.text(targetName + "'s in the ", NamedTextColor.WHITE)
+                        .append(Component.text(rawServerName, NamedTextColor.AQUA))
+        );
 
     }
 

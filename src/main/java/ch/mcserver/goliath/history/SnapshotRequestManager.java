@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class SnapshotRequestManager {
 
-    public static final MinecraftChannelIdentifier CHANNEL = MinecraftChannelIdentifier.from("GoliathCommand:history");
+    public static final MinecraftChannelIdentifier CHANNEL = MinecraftChannelIdentifier.from("goliath:history");
 
     public final ProxyServer proxy;
 
