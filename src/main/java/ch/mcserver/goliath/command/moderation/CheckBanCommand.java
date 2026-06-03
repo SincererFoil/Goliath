@@ -40,7 +40,10 @@ public class CheckBanCommand implements SimpleCommand {
         ProxyPlayerObject playerObject = playerRepository.loadPlayerByUsername(targetRawName);
         ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
 
-        for (PlayerPunishment punishment : playerObject.getPunishments()) {
+        List<PlayerPunishment> punishments = playerObject.getPunishments();
+
+        for (int i = punishments.size() - 1; i >= 0; i--) {
+            PlayerPunishment punishment = punishments.get(i);
 
             String reason = punishment.getReason();
             String staffName = punishment.getPunishedBy();
