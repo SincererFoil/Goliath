@@ -68,9 +68,8 @@ public class UnbanCommand implements SimpleCommand {
 
         invocation.source().sendMessage(
                 Component.text(
-                        "Unbanned player " + playerObject.getName(),
-                        NamedTextColor.GREEN
-                )
+                        "Unbanned player ", NamedTextColor.RED
+                ).append(Component.text(playerObject.getName(), NamedTextColor.WHITE))
         );
     }
 

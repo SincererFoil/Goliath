@@ -5,6 +5,7 @@ import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.moderation.*;
 import ch.mcserver.goliath.command.staff.GmspCommand;
 import ch.mcserver.goliath.command.staff.SfModeCommand;
+import ch.mcserver.goliath.command.utility.FindPlayerCommand;
 import ch.mcserver.goliath.command.utility.WhereAmICommand;
 import ch.mcserver.goliath.database.mongodb.MongoDBManager;
 import ch.mcserver.goliath.database.mysql.MySQLManager;
@@ -153,6 +154,11 @@ public class Goliath {
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("gtp").aliases("goliath:gtp").plugin(this).build(),
                 new GoliathTeleportCommand(proxy)
+        );
+
+        proxy.getCommandManager().register(
+                proxy.getCommandManager().metaBuilder("fp").aliases("findplayer").plugin(this).build(),
+                new FindPlayerCommand(proxy)
         );
     }
 
