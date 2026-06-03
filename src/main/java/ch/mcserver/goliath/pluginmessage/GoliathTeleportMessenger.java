@@ -15,7 +15,7 @@ import static ch.mcserver.goliath.player.ProxyPlayerManager.getPlayer;
 public class GoliathTeleportMessenger {
 
     public static final MinecraftChannelIdentifier CHANNEL =
-            MinecraftChannelIdentifier.from("GoliathCommand:gtp");
+            MinecraftChannelIdentifier.from("goliath:gtp");
 
     private final ProxyServer proxy;
 
