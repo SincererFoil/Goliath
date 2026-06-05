@@ -17,7 +17,7 @@ public class MongoDBManager {
             String uri = Goliath.config.node("mongodb", "uri").getString();
 
             mongoClient = MongoClients.create(uri);
-            mongoDatabase = mongoClient.getDatabase("GoliathCommand");
+            mongoDatabase = mongoClient.getDatabase("goliath");
             Goliath.LOGGER.info("[Goliath] MongoDB connected");
         } catch (Exception exception) {
             Goliath.LOGGER.error("[Goliath] MongoDB connection Failed. Reason: " + exception.getMessage().toString() );
