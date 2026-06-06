@@ -54,7 +54,8 @@ public class GoliathCommand implements SimpleCommand {
         String targetServer = args[1];
         Optional<RegisteredServer> server = proxy.getServer(targetServer);
         if (!server.isPresent()) {
-            player.sendMessage(Component.text("Server not found!", NamedTextColor.RED));
+            player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\n" +
+                    "try again in a few minutes.!", NamedTextColor.RED));
             return;
         }
         player.createConnectionRequest(server.get()).fireAndForget();
