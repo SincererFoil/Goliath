@@ -58,8 +58,8 @@ public class GoliathCommand implements SimpleCommand {
                     "try again in a few minutes.!", NamedTextColor.RED));
             return;
         }
-        player.createConnectionRequest(server.get()).fireAndForget();
-
+        player.createConnectionRequest(server.get()).connect().thenAccept(result -> {
+                    if (!result.isSuccessful()) {player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));}});
     }
 
 
