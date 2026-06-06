@@ -1,4 +1,4 @@
-package ch.mcserver.goliath.pluginmessage;
+package ch.mcserver.goliath.pluginmessenger;
 
 import ch.mcserver.goliath.player.ProxyPlayerObject;
 import com.google.common.io.ByteArrayDataOutput;

@@ -1,7 +1,7 @@
 package ch.mcserver.goliath.listener;
 
 import ch.mcserver.goliath.player.ProxyPlayerObject;
-import ch.mcserver.goliath.pluginmessage.GmspMessenger;
+import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.Player;

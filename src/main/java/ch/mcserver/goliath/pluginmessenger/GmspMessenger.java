@@ -1,4 +1,4 @@
-package ch.mcserver.goliath.pluginmessage;
+package ch.mcserver.goliath.pluginmessenger;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;

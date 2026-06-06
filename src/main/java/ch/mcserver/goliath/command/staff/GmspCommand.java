@@ -1,7 +1,7 @@
 package ch.mcserver.goliath.command.staff;
 
 import ch.mcserver.goliath.player.ProxyPlayerObject;
-import ch.mcserver.goliath.pluginmessage.GmspMessenger;
+import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
