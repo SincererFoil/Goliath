@@ -85,40 +85,28 @@ public class HistroyLogTypes {
 
     public void DisconnectHistory(UUID playerUuid) {
         Optional<Player> optionalPlayer = proxy.getPlayer(playerUuid);
-        // Sets the player to an optional player to check if the player is present.
-        if (!optionalPlayer.isPresent()) {
-            UUID historyId = UUID.randomUUID();
-
-            repository.createEvent(
-                    playerUuid,
-                    "Disconnect",
-                    "Disconnect-History",
-                    "UNKNOWN",
-                    historyId.toString()
-            );
-            return;
-        }
-
-        Player player = optionalPlayer.get();
-        // Converts the optional player to a Player
 
         String server = "UNKNOWN";
 
-        Optional<ServerConnection> optionalServer = player.getCurrentServer();
-        // Converts the current server to a optionalServer to check if the server is present.
+        if (optionalPlayer.isPresent()) {
+            Player player = optionalPlayer.get();
 
-        if (optionalServer.isPresent()) {
-            server = optionalServer.get().getServerInfo().getName();
+            server = player.getCurrentServer()
+                    .map(connection -> connection.getServerInfo().getName())
+                    .orElse("UNKNOWN");
         }
 
         UUID historyId = UUID.randomUUID();
-        // Generates a random UUID for the history logId
 
         String historyTitle = "PlayerQuit DISCONNECTING FREE";
-        // Set's the title of the event for the Database.
 
-        repository.createEvent(playerUuid, "Disconnect", historyTitle, server, historyId.toString());
-        // Creates a new Event for the Database
+        repository.createEvent(
+                playerUuid,
+                "Disconnect",
+                historyTitle,
+                server,
+                historyId.toString()
+        );
     }
 
 

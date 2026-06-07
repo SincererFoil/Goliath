@@ -48,7 +48,7 @@ public class HistoryEventListener {
     public void onPlayer(KickedFromServerEvent event) {
         Player player = event.getPlayer();
         RegisteredServer server = event.getServer();
-        String reason = event.getServerKickReason().toString();
+        String reason = "Server Kick";
         logTypes.kickHistory(player.getUniqueId(), server, reason);
     }
 }
