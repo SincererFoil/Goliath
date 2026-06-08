@@ -9,7 +9,8 @@ public class MySQLManager {
 
     private Connection connection;
 
-    public void connect() {
+
+    public synchronized void connect() {
 
         try {
 
@@ -19,7 +20,6 @@ public class MySQLManager {
             String username = Goliath.config.node("mysql", "username").getString("goliath");
             String password = Goliath.config.node("mysql", "password").getString("");
 
-            Class.forName("com.mysql.cj.jdbc.Driver");
 
             connection = DriverManager.getConnection(
                     "jdbc:mysql://" + host + ":" + port + "/" + database +
@@ -27,6 +27,7 @@ public class MySQLManager {
                     username,
                     password
             );
+
 
             Goliath.LOGGER.info("[Goliath] MySQL connected.");
 
@@ -37,19 +38,20 @@ public class MySQLManager {
         }
     }
 
-    public Connection getConnection() {
+    public synchronized Connection getConnection() {
 
         try {
-
-            if (connection == null || connection.isClosed()) {
+            if (connection == null || connection.isClosed() || !connection.isValid(3)) {
                 connect();
             }
 
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
+            return connection;
 
-        return connection;
+        } catch (Exception exception) {
+            Goliath.LOGGER.error("[Goliath] MySQL connection check failed.", exception);
+            connect();
+            return connection;
+        }
     }
 
     public void disconnect() {
