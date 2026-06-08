@@ -17,6 +17,7 @@ import ch.mcserver.goliath.listener.CommandBlocker;
 import ch.mcserver.goliath.listener.CommandHider;
 import ch.mcserver.goliath.listener.GmspServerSwitchListener;
 import ch.mcserver.goliath.player.ProxyPlayerManager;
+import ch.mcserver.goliath.pluginmessenger.CommandUpdateMessenger;
 import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import ch.mcserver.goliath.pluginmessenger.GoliathTeleportMessenger;
 import ch.mcserver.goliath.history.SnapshotRequestManager;
@@ -60,6 +61,8 @@ public class Goliath {
     public static MongoDBManager mongoDBManager;
 
     public static GoliathTeleportMessenger goliathTeleportMessenger;
+    public static CommandUpdateMessenger commandUpdateMessenger;
+
     public static PlayerRepository playerRepository;
 
     public static ConfigurationNode config;
@@ -92,6 +95,7 @@ public class Goliath {
 
         playerRepository = new PlayerRepository(mySQLManager);
         goliathTeleportMessenger = new GoliathTeleportMessenger(proxy);
+        commandUpdateMessenger = new CommandUpdateMessenger(proxy);
 
         SnapshotRequestManager snapshotRequestManager = new SnapshotRequestManager(proxy);
         HistoryEventRepository historyRepository = new HistoryEventRepository(mongoDBManager.getCollection("history_events"));

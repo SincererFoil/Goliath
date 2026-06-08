@@ -1,6 +1,8 @@
 package ch.mcserver.goliath.command.staff;
 
+import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
+import ch.mcserver.goliath.pluginmessenger.CommandUpdateMessenger;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.PlayerAvailableCommandsEvent;
@@ -70,12 +72,13 @@ public class SfModeCommand implements SimpleCommand {
             message = Component.text(
                     "Staff mode is on now, all staff functions will hide on next log in and you won't be able to use any."
             ).color(NamedTextColor.GRAY);
-
+            Goliath.commandUpdateMessenger.sendUpdate(player);
         } else {
 
             message = Component.text(
                     "Staff mode is off now, on next login everything will be fine."
             ).color(NamedTextColor.GRAY);
+            Goliath.commandUpdateMessenger.sendUpdate(player);
         }
 
         player.sendMessage(message);
