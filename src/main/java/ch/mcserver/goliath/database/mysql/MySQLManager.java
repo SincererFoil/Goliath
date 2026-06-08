@@ -19,7 +19,7 @@ public class MySQLManager {
             String database = Goliath.config.node("mysql", "database").getString("goliath");
             String username = Goliath.config.node("mysql", "username").getString("goliath");
             String password = Goliath.config.node("mysql", "password").getString("");
-
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
             connection = DriverManager.getConnection(
                     "jdbc:mysql://" + host + ":" + port + "/" + database +

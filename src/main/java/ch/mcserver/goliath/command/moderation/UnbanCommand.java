@@ -7,9 +7,11 @@ import com.velocitypowered.api.command.SimpleCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class UnbanCommand implements SimpleCommand {
 
@@ -74,9 +76,15 @@ public class UnbanCommand implements SimpleCommand {
     }
 
     @Override
-    public List<String> suggest(Invocation invocation) {
-        return SimpleCommand.super.suggest(invocation);
+    public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
+        if (invocation.arguments().length != 1) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+        return CompletableFuture.supplyAsync(() ->
+                Goliath.playerRepository.getAllUsernames().stream().filter(name -> name.toLowerCase().startsWith(invocation.arguments()[0].toLowerCase())).toList()
+        );
     }
+
 
     @Override
     public boolean hasPermission(Invocation invocation) {

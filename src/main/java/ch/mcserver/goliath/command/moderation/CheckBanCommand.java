@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class CheckBanCommand implements SimpleCommand {
 
@@ -119,10 +120,14 @@ public class CheckBanCommand implements SimpleCommand {
     }
 
     @Override
-    public List<String> suggest(Invocation invocation) {
-        return List.of();
+    public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
+        if (invocation.arguments().length != 1) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+        return CompletableFuture.supplyAsync(() ->
+                Goliath.playerRepository.getAllPunishedUsernames().stream().filter(name -> name.toLowerCase().startsWith(invocation.arguments()[0].toLowerCase())).toList()
+        );
     }
-
     @Override
     public boolean hasPermission(Invocation invocation) {
         return invocation.source().hasPermission("GoliathCommand.checkban");

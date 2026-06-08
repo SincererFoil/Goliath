@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class PlayerRepository {
@@ -336,5 +337,40 @@ public class PlayerRepository {
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
+    }
+
+    public List<String> getAllUsernames() {
+        List<String> usernames = new ArrayList<>();
+        try {
+            Connection connection = mySQLManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(
+                    "SELECT name FROM players"
+            );
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                usernames.add(resultSet.getString("name"));
+            }
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+        }
+        return usernames;
+    }
+
+    public List<String> getAllPunishedUsernames() {
+        List<String> usernames = new ArrayList<>();
+        try {
+            Connection connection = mySQLManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(
+                    "SELECT DISTINCT players.name FROM players " +
+                            "INNER JOIN player_punishments ON players.uuid = player_punishments.player_uuid"
+            );
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                usernames.add(resultSet.getString("name"));
+            }
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+        }
+        return usernames;
     }
 }
