@@ -77,11 +77,11 @@ public class UnbanCommand implements SimpleCommand {
 
     @Override
     public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
-        if (invocation.arguments().length != 1) {
-            return CompletableFuture.completedFuture(List.of());
-        }
+        String input = invocation.arguments().length > 0 ? invocation.arguments()[0] : "";
         return CompletableFuture.supplyAsync(() ->
-                Goliath.playerRepository.getAllUsernames().stream().filter(name -> name.toLowerCase().startsWith(invocation.arguments()[0].toLowerCase())).toList()
+                Goliath.playerRepository.getAllUsernames().stream()
+                        .filter(name -> name.toLowerCase().startsWith(input.toLowerCase()))
+                        .toList()
         );
     }
 
