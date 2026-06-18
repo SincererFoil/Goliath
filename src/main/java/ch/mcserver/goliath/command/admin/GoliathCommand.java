@@ -73,23 +73,18 @@ public class GoliathCommand implements SimpleCommand {
      */
     @Override
     public List<String> suggest(Invocation invocation) {
-        if (invocation.arguments().length == 2) {
-            if (invocation.arguments()[0].equalsIgnoreCase("move")) {
-                List<String> suggestions = List.of(
-                        "goliath-dev",
-                        "goliath-devv",
-                        "goliath-ASH-spawn1",
-                        "goliath-ASH-spawn2",
-                        "goliath-ASH-spawn3",
-                        "goliath-ASH-spawn4",
-                        "goliath-ASH-spawn5",
-                        "goliath-ASH-spawn6"
-                );
-                return suggestions.stream().filter(s -> s.startsWith(invocation.arguments()[1].toLowerCase()))
-                        .toList();
-            }
+        String[] args = invocation.arguments();
 
+        if (args.length == 2 && args[0].equalsIgnoreCase("move")) {
+            String input = args[1].toLowerCase();
+
+            return proxy.getAllServers().stream()
+                    .map(registeredServer -> registeredServer.getServerInfo().getName())
+                    .filter(serverName -> serverName.toLowerCase().startsWith(input))
+                    .sorted()
+                    .toList();
         }
+
         return List.of();
     }
 
