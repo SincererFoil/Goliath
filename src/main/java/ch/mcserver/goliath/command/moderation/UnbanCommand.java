@@ -3,6 +3,7 @@ package ch.mcserver.goliath.command.moderation;
 import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.velocitypowered.api.command.SimpleCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -10,6 +11,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -75,15 +77,6 @@ public class UnbanCommand implements SimpleCommand {
         );
     }
 
-    @Override
-    public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
-        String input = invocation.arguments().length > 0 ? invocation.arguments()[0] : "";
-        return CompletableFuture.supplyAsync(() ->
-                Goliath.playerRepository.getAllUsernames().stream()
-                        .filter(name -> name.toLowerCase().startsWith(input.toLowerCase()))
-                        .toList()
-        );
-    }
 
 
     @Override

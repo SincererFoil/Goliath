@@ -119,15 +119,7 @@ public class CheckBanCommand implements SimpleCommand {
         return builder.toString().trim();
     }
 
-    @Override
-    public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
-        String input = invocation.arguments().length > 0 ? invocation.arguments()[0] : "";
-        return CompletableFuture.supplyAsync(() ->
-                Goliath.playerRepository.getAllUsernames().stream()
-                        .filter(name -> name.toLowerCase().startsWith(input.toLowerCase()))
-                        .toList()
-        );
-    }
+
     @Override
     public boolean hasPermission(Invocation invocation) {
         return invocation.source().hasPermission("GoliathCommand.checkban");
