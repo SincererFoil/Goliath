@@ -148,6 +148,16 @@ public class GoliathCommand implements SimpleCommand {
                     .toList();
         }
 
+        if (args.length == 2 && args[0].equalsIgnoreCase("update")) {
+            String input = args[1].toLowerCase();
+
+            return proxy.getAllServers().stream()
+                    .map(registeredServer -> registeredServer.getServerInfo().getName())
+                    .filter(serverName -> serverName.toLowerCase().startsWith(input))
+                    .sorted()
+                    .toList();
+        }
+
         return List.of();
     }
 
