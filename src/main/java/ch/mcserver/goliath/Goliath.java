@@ -8,26 +8,29 @@ import ch.mcserver.goliath.command.staff.SfModeCommand;
 import ch.mcserver.goliath.command.utility.FindPlayerCommand;
 import ch.mcserver.goliath.command.utility.WhereAmICommand;
 import ch.mcserver.goliath.database.mongodb.MongoDBManager;
-import ch.mcserver.goliath.database.mysql.MySQLManager;
-import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.database.mongodb.repository.HistoryEventRepository;
+import ch.mcserver.goliath.database.mysql.MySQLManager;
+import ch.mcserver.goliath.database.mysql.repository.PlayerLocationRepository;
+import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.history.HistoryEventListener;
 import ch.mcserver.goliath.history.HistroyLogTypes;
+import ch.mcserver.goliath.history.SnapshotRequestManager;
 import ch.mcserver.goliath.listener.CommandBlocker;
 import ch.mcserver.goliath.listener.CommandHider;
 import ch.mcserver.goliath.listener.GmspServerSwitchListener;
+import ch.mcserver.goliath.listener.PunishmentConnectListener;
 import ch.mcserver.goliath.player.ProxyPlayerManager;
+import ch.mcserver.goliath.player.location.JoinController;
 import ch.mcserver.goliath.pluginmessenger.CommandUpdateMessenger;
 import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import ch.mcserver.goliath.pluginmessenger.GoliathTeleportMessenger;
-import ch.mcserver.goliath.history.SnapshotRequestManager;
-import ch.mcserver.goliath.listener.PunishmentConnectListener;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -64,6 +67,7 @@ public class Goliath {
     public static CommandUpdateMessenger commandUpdateMessenger;
 
     public static PlayerRepository playerRepository;
+    public static PlayerLocationRepository playerLocationRepository;
 
     public static ConfigurationNode config;
 
@@ -78,7 +82,6 @@ public class Goliath {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-
         logger.info("Goliath Core enabled.");
 
         loadConfig();
@@ -94,8 +97,14 @@ public class Goliath {
         mongoDBManager.connect();
 
         playerRepository = new PlayerRepository(mySQLManager);
+        playerLocationRepository = new PlayerLocationRepository(mySQLManager);
+
         goliathTeleportMessenger = new GoliathTeleportMessenger(proxy);
         commandUpdateMessenger = new CommandUpdateMessenger(proxy);
+
+        proxy.getChannelRegistrar().register(
+                MinecraftChannelIdentifier.create("goliath", "location")
+        );
 
         SnapshotRequestManager snapshotRequestManager = new SnapshotRequestManager(proxy);
         HistoryEventRepository historyRepository = new HistoryEventRepository(mongoDBManager.getCollection("history_events"));
@@ -108,7 +117,8 @@ public class Goliath {
         proxy.getEventManager().register(this, new CommandBlocker());
         proxy.getEventManager().register(this, new PunishmentConnectListener());
         proxy.getEventManager().register(this, new GmspServerSwitchListener(proxy, this, gmspMessenger));
-        proxy.getEventManager().register(this, new HistoryEventListener(historyLogTypes));
+        proxy.getEventManager().register(this, new HistoryEventListener(historyLogTypes, proxy, this));
+        proxy.getEventManager().register(this, new JoinController(proxy, playerLocationRepository));
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("goliath").plugin(this).build(),

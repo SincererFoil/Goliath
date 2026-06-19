@@ -10,7 +10,7 @@ public class MySQLManager {
     private Connection connection;
 
 
-    public synchronized void connect() {
+    public void connect() {
 
         try {
 
@@ -27,7 +27,6 @@ public class MySQLManager {
                     username,
                     password
             );
-
 
             Goliath.LOGGER.info("[Goliath] MySQL connected.");
 

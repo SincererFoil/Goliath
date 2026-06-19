@@ -5,19 +5,25 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 public class HistoryEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(HistoryEventListener.class);
     private HistroyLogTypes logTypes;
+    private final ProxyServer proxy;
+    private final Object plugin;
 
-    public HistoryEventListener(HistroyLogTypes logTypes) {
+    public HistoryEventListener(HistroyLogTypes logTypes, ProxyServer proxy, Object plugin) {
         this.logTypes = logTypes;
+        this.proxy = proxy;
+        this.plugin = plugin;
     }
 
 
@@ -27,14 +33,17 @@ public class HistoryEventListener {
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
         Optional<RegisteredServer> previousServer = event.getPreviousServer();
-        // Converts the previousServer to an Optional RegisterdServer to check if the previous server exists,
-        // This is the normal Method to check if the player switched the server or joined the server.
+
         if (previousServer.isEmpty()) {
-            logTypes.JoinHistory(player.getUniqueId(), event.getServer());
-            // Executes the Join History Type
+            proxy.getScheduler()
+                    .buildTask(plugin, () -> logTypes.JoinHistory(player.getUniqueId(), event.getServer()))
+                    .delay(1, TimeUnit.SECONDS)
+                    .schedule();
         } else {
-            logTypes.switchTarget(player.getUniqueId(), event.getServer());
-            // Executes the switchTarget History Type.
+            proxy.getScheduler()
+                    .buildTask(plugin, () -> logTypes.switchTarget(player.getUniqueId(), event.getServer()))
+                    .delay(1, TimeUnit.SECONDS)
+                    .schedule();
         }
     }
 
@@ -42,7 +51,6 @@ public class HistoryEventListener {
     public void onPlayerDiconnect(DisconnectEvent event) {
         Player player = event.getPlayer();
         logTypes.DisconnectHistory(player.getUniqueId());
-        // Execute the DisconnectHistory Log
     }
     @Subscribe
     public void onPlayer(KickedFromServerEvent event) {

@@ -24,16 +24,16 @@ public class PlayerRepository {
     }
 
     public boolean exists(UUID uuid) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    "SELECT * FROM players WHERE uuid = ?"
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT * FROM players WHERE uuid = ?"
+        )) {
 
             statement.setString(1, uuid.toString());
 
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
 
         } catch (SQLException exception) {
             exception.printStackTrace();
@@ -43,16 +43,16 @@ public class PlayerRepository {
     }
 
     public boolean existsByUsername(String name) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    "SELECT * FROM players WHERE name = ?"
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT * FROM players WHERE name = ?"
+        )) {
 
             statement.setString(1, name);
 
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
 
         } catch (SQLException exception) {
             exception.printStackTrace();
@@ -62,36 +62,36 @@ public class PlayerRepository {
     }
 
     public ProxyPlayerObject loadPlayer(UUID uuid) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    "SELECT * FROM players WHERE uuid = ?"
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT * FROM players WHERE uuid = ?"
+        )) {
 
             statement.setString(1, uuid.toString());
 
-            ResultSet resultSet = statement.executeQuery();
+            try (ResultSet resultSet = statement.executeQuery()) {
 
-            if (!resultSet.next()) {
-                return null;
+                if (!resultSet.next()) {
+                    return null;
+                }
+
+                UUID playerUuid = UUID.fromString(resultSet.getString("uuid"));
+
+                return new ProxyPlayerObject(
+                        playerUuid,
+                        resultSet.getString("name"),
+                        resultSet.getString("prefix"),
+                        resultSet.getString("current_server"),
+                        resultSet.getBoolean("sfmode"),
+                        resultSet.getBoolean("debug_mode"),
+                        resultSet.getBoolean("gmsp"),
+                        resultSet.getBoolean("vanished"),
+                        resultSet.getFloat("fly_speed"),
+                        resultSet.getLong("first_join"),
+                        resultSet.getLong("last_join"),
+                        loadPunishments(playerUuid)
+                );
             }
-
-            UUID playerUuid = UUID.fromString(resultSet.getString("uuid"));
-
-            return new ProxyPlayerObject(
-                    playerUuid,
-                    resultSet.getString("name"),
-                    resultSet.getString("prefix"),
-                    resultSet.getString("current_server"),
-                    resultSet.getBoolean("sfmode"),
-                    resultSet.getBoolean("debug_mode"),
-                    resultSet.getBoolean("gmsp"),
-                    resultSet.getBoolean("vanished"),
-                    resultSet.getFloat("fly_speed"),
-                    resultSet.getLong("first_join"),
-                    resultSet.getLong("last_join"),
-                    loadPunishments(playerUuid)
-            );
 
         } catch (SQLException exception) {
             exception.printStackTrace();
@@ -101,36 +101,36 @@ public class PlayerRepository {
     }
 
     public ProxyPlayerObject loadPlayerByUsername(String username) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    "SELECT * FROM players WHERE name = ?"
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT * FROM players WHERE name = ?"
+        )) {
 
             statement.setString(1, username);
 
-            ResultSet resultSet = statement.executeQuery();
+            try (ResultSet resultSet = statement.executeQuery()) {
 
-            if (!resultSet.next()) {
-                return null;
+                if (!resultSet.next()) {
+                    return null;
+                }
+
+                UUID playerUuid = UUID.fromString(resultSet.getString("uuid"));
+
+                return new ProxyPlayerObject(
+                        playerUuid,
+                        resultSet.getString("name"),
+                        resultSet.getString("prefix"),
+                        resultSet.getString("current_server"),
+                        resultSet.getBoolean("sfmode"),
+                        resultSet.getBoolean("debug_mode"),
+                        resultSet.getBoolean("gmsp"),
+                        resultSet.getBoolean("vanished"),
+                        resultSet.getFloat("fly_speed"),
+                        resultSet.getLong("first_join"),
+                        resultSet.getLong("last_join"),
+                        loadPunishments(playerUuid)
+                );
             }
-
-            UUID playerUuid = UUID.fromString(resultSet.getString("uuid"));
-
-            return new ProxyPlayerObject(
-                    playerUuid,
-                    resultSet.getString("name"),
-                    resultSet.getString("prefix"),
-                    resultSet.getString("current_server"),
-                    resultSet.getBoolean("sfmode"),
-                    resultSet.getBoolean("debug_mode"),
-                    resultSet.getBoolean("gmsp"),
-                    resultSet.getBoolean("vanished"),
-                    resultSet.getFloat("fly_speed"),
-                    resultSet.getLong("first_join"),
-                    resultSet.getLong("last_join"),
-                    loadPunishments(playerUuid)
-            );
 
         } catch (SQLException exception) {
             exception.printStackTrace();
@@ -143,36 +143,36 @@ public class PlayerRepository {
 
         ArrayList<PlayerPunishment> punishments = new ArrayList<>();
 
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    "SELECT * FROM player_punishments WHERE player_uuid = ?"
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT * FROM player_punishments WHERE player_uuid = ?"
+        )) {
 
             statement.setString(1, uuid.toString());
 
-            ResultSet resultSet = statement.executeQuery();
+            try (ResultSet resultSet = statement.executeQuery()) {
 
-            while (resultSet.next()) {
+                while (resultSet.next()) {
 
-                Timestamp createdAtTimestamp = resultSet.getTimestamp("created_at");
-                Timestamp expiresAtTimestamp = resultSet.getTimestamp("expires_at");
+                    Timestamp createdAtTimestamp = resultSet.getTimestamp("created_at");
+                    Timestamp expiresAtTimestamp = resultSet.getTimestamp("expires_at");
 
-                punishments.add(
-                        new PlayerPunishment(
-                                resultSet.getInt("offense_level"),
-                                resultSet.getString("reason"),
-                                null,
-                                resultSet.getString("punished_by"),
-                                createdAtTimestamp.toLocalDateTime().atZone(ZONE),
-                                expiresAtTimestamp == null
-                                        ? null
-                                        : expiresAtTimestamp.toLocalDateTime().atZone(ZONE),
-                                resultSet.getBoolean("wiped"),
-                                resultSet.getString("staff_note"),
-                                resultSet.getBoolean("permanent")
-                        )
-                );
+                    punishments.add(
+                            new PlayerPunishment(
+                                    resultSet.getInt("offense_level"),
+                                    resultSet.getString("reason"),
+                                    null,
+                                    resultSet.getString("punished_by"),
+                                    createdAtTimestamp.toLocalDateTime().atZone(ZONE),
+                                    expiresAtTimestamp == null
+                                            ? null
+                                            : expiresAtTimestamp.toLocalDateTime().atZone(ZONE),
+                                    resultSet.getBoolean("wiped"),
+                                    resultSet.getString("staff_note"),
+                                    resultSet.getBoolean("permanent")
+                            )
+                    );
+                }
             }
 
         } catch (SQLException exception) {
@@ -183,17 +183,16 @@ public class PlayerRepository {
     }
 
     public void create(ProxyPlayerObject proxyPlayerObject) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    """
-                    INSERT INTO players(
-                        uuid, name, prefix, shards, money, kills, deaths,
-                        blocks_broken, blocks_placed, sfmode, debug_mode,
-                        gmsp, vanished, fly_speed, current_server, first_join, last_join
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                """
+                INSERT INTO players(
+                    uuid, name, prefix, shards, money, kills, deaths,
+                    blocks_broken, blocks_placed, sfmode, debug_mode,
+                    gmsp, vanished, fly_speed, current_server, first_join, last_join
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+        )) {
 
             statement.setString(1, proxyPlayerObject.getUuid().toString());
             statement.setString(2, proxyPlayerObject.getName());
@@ -224,17 +223,15 @@ public class PlayerRepository {
     }
 
     public void save(ProxyPlayerObject proxyPlayerObject) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-
-            PreparedStatement statement = connection.prepareStatement(
-                    """
-                    UPDATE players
-                    SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?, vanished = ?,
-                        fly_speed = ?, current_server = ?, last_join = ?
-                    WHERE uuid = ?
-                    """
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                """
+                UPDATE players
+                SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?, vanished = ?,
+                    fly_speed = ?, current_server = ?, last_join = ?
+                WHERE uuid = ?
+                """
+        )) {
 
             statement.setString(1, proxyPlayerObject.getName());
             statement.setString(2, proxyPlayerObject.getPrefix());
@@ -249,12 +246,12 @@ public class PlayerRepository {
 
             statement.executeUpdate();
 
-            PreparedStatement deletePunishments = connection.prepareStatement(
+            try (PreparedStatement deletePunishments = connection.prepareStatement(
                     "DELETE FROM player_punishments WHERE player_uuid = ?"
-            );
-
-            deletePunishments.setString(1, proxyPlayerObject.getUuid().toString());
-            deletePunishments.executeUpdate();
+            )) {
+                deletePunishments.setString(1, proxyPlayerObject.getUuid().toString());
+                deletePunishments.executeUpdate();
+            }
 
             for (PlayerPunishment punishment : proxyPlayerObject.getPunishments()) {
                 savePunishment(proxyPlayerObject.getUuid(), punishment);
@@ -266,17 +263,15 @@ public class PlayerRepository {
     }
 
     public void savePunishment(UUID playerUuid, PlayerPunishment punishment) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-
-            PreparedStatement statement = connection.prepareStatement(
-                    """
-                    INSERT INTO player_punishments(
-                        player_uuid, offense_level, reason, punished_by,
-                        created_at, expires_at, wiped, staff_note, permanent
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                """
+                INSERT INTO player_punishments(
+                    player_uuid, offense_level, reason, punished_by,
+                    created_at, expires_at, wiped, staff_note, permanent
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+        )) {
 
             statement.setString(1, playerUuid.toString());
             statement.setInt(2, punishment.getOffenseLevel());
@@ -309,17 +304,15 @@ public class PlayerRepository {
     }
 
     public void savePlayerDataOnly(ProxyPlayerObject proxyPlayerObject) {
-        try {
-            Connection connection = mySQLManager.getConnection();
-
-            PreparedStatement statement = connection.prepareStatement(
-                    """
-                    UPDATE players
-                    SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?, vanished = ?,
-                        fly_speed = ?, current_server = ?, last_join = ?
-                    WHERE uuid = ?
-                    """
-            );
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                """
+                UPDATE players
+                SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?, vanished = ?,
+                    fly_speed = ?, current_server = ?, last_join = ?
+                WHERE uuid = ?
+                """
+        )) {
 
             statement.setString(1, proxyPlayerObject.getName());
             statement.setString(2, proxyPlayerObject.getPrefix());
@@ -341,15 +334,16 @@ public class PlayerRepository {
 
     public List<String> getAllUsernames() {
         List<String> usernames = new ArrayList<>();
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    "SELECT name FROM players"
-            );
-            ResultSet resultSet = statement.executeQuery();
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT name FROM players"
+        );
+             ResultSet resultSet = statement.executeQuery()) {
+
             while (resultSet.next()) {
                 usernames.add(resultSet.getString("name"));
             }
+
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
@@ -358,16 +352,17 @@ public class PlayerRepository {
 
     public List<String> getAllPunishedUsernames() {
         List<String> usernames = new ArrayList<>();
-        try {
-            Connection connection = mySQLManager.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
-                    "SELECT DISTINCT players.name FROM players " +
-                            "INNER JOIN player_punishments ON players.uuid = player_punishments.player_uuid"
-            );
-            ResultSet resultSet = statement.executeQuery();
+        Connection connection = mySQLManager.getConnection();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT DISTINCT players.name FROM players " +
+                        "INNER JOIN player_punishments ON players.uuid = player_punishments.player_uuid"
+        );
+             ResultSet resultSet = statement.executeQuery()) {
+
             while (resultSet.next()) {
                 usernames.add(resultSet.getString("name"));
             }
+
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
