@@ -7,6 +7,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -33,18 +34,12 @@ public class GoliathCommand implements SimpleCommand {
         String[] args = invocation.arguments();
         String range = args[0];
 
-        if (!(invocation.source() instanceof Player)) {
-            invocation.source().sendMessage(Component.text("Only players can execute this command!"));
-            return;
-        }
-        Player player = (Player) invocation.source();
-
         switch (range.toLowerCase()) {
             case "move":
-                goliathMove(player, args);
+                goliathMove(invocation);
                 break;
             case "update":
-                goliathUpdate();
+                goliathUpdate(invocation);
                 break;
             default:
                 return;
@@ -53,21 +48,63 @@ public class GoliathCommand implements SimpleCommand {
 
 
     }
-    private void goliathMove(Player player, String[] args) {
+    private void goliathMove(Invocation invocation) {
+        String[] args = invocation.arguments();
+        if (!(invocation.source() instanceof Player)) {
+            invocation.source().sendMessage(Component.text("Only players can execute this command!"));
+            return;
+        }
+        Player player = (Player) invocation.source();
         String targetServer = args[1];
         Optional<RegisteredServer> server = proxy.getServer(targetServer);
         if (!server.isPresent()) {
             player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\n" +
                     "try again in a few minutes.!", NamedTextColor.RED));
+            player.sendActionBar(Component.text("It seems that you are connecting to an area in maintenance,\n" +
+                    "try again in a few minutes.!", NamedTextColor.RED));
             return;
         }
         player.createConnectionRequest(server.get()).connect().thenAccept(result -> {
-                    if (!result.isSuccessful()) {player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));}});
+                    if (!result.isSuccessful()) {
+                        player.sendMessage(Component.text("You are already connected to this Server", NamedTextColor.RED));
+                        player.sendActionBar(Component.text("You are already connected to this Server", NamedTextColor.RED));
+                    }});
     }
 
-    private void goliathUpdate() {
-        for (Player player : proxy.getAllPlayers()) {
-            player.disconnect(Component.text("We are under maintenace.", NamedTextColor.RED).appendNewline().append(Component.text("For more information check updates channel.", NamedTextColor.WHITE)).appendNewline().append(Component.text("Join us in discord: ", NamedTextColor.GRAY)).append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW)));
+
+    private void goliathUpdate(Invocation invocation) {
+        String[] args = invocation.arguments();
+
+        if (args.length < 2) {
+            Component message = Component.text("We are under maintenance.", NamedTextColor.RED)
+                    .appendNewline()
+                    .append(Component.text("For more information check updates channel.", NamedTextColor.WHITE))
+                    .appendNewline()
+                    .append(Component.text("Join us in discord: ", NamedTextColor.GRAY))
+                    .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
+            for (Player player : proxy.getAllPlayers()) {
+                player.disconnect(message);
+            }
+            return;
+        }
+        String serverName = args[1];
+        Optional<RegisteredServer> server = proxy.getServer(serverName);
+        if (server.isEmpty()) {
+            invocation.source().sendMessage(Component.text("It seems that this area is currently not available,\ntry again in a few minutes.", NamedTextColor.RED));
+            return;
+        }
+
+        try {
+            new ProcessBuilder("/bin/bash", "/data/DonutSMP/update_server.sh", serverName).start();
+
+            invocation.source().sendMessage(Component.text("Updating " + serverName + "...", NamedTextColor.GREEN));
+        } catch (IOException exception) {
+            exception.printStackTrace();
+
+            invocation.source().sendMessage(Component.text(
+                    "Failed to update " + serverName + ".",
+                    NamedTextColor.RED
+            ));
         }
     }
 
