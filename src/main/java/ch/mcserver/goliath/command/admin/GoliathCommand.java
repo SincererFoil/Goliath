@@ -12,12 +12,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class GoliathCommand implements SimpleCommand {
     public static HashMap<UUID, Float> playerFlySpeed = new HashMap<>();
     private final ProxyServer proxy;
-    public GoliathCommand(ProxyServer proxy) {
+    private final Object plugin;
+    public GoliathCommand(ProxyServer proxy, Object plugin) {
         this.proxy = proxy;
+        this.plugin = plugin;
     }
 
 
@@ -93,28 +96,52 @@ public class GoliathCommand implements SimpleCommand {
                     .appendNewline()
                     .append(Component.text("Join us in discord: ", NamedTextColor.GRAY))
                     .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
+
             for (Player player : proxy.getAllPlayers()) {
                 player.disconnect(message);
             }
-            try {
-                new ProcessBuilder("/bin/bash", "/data/DonutSMP/deploy.sh").start();
-            } catch (IOException exception) {
-                exception.printStackTrace();
-                invocation.source().sendMessage(Component.text("Failed to update... ", NamedTextColor.RED));
-            }
+
+            proxy.getScheduler()
+                    .buildTask(plugin, () -> {
+                        try {
+                            new ProcessBuilder(
+                                    "/bin/bash",
+                                    "/data/DonutSMP/deploy.sh"
+                            ).start();
+                        } catch (IOException exception) {
+                            exception.printStackTrace();
+                        }
+                    })
+                    .delay(2, TimeUnit.SECONDS)
+                    .schedule();
+
             return;
         }
+
         String serverName = args[1];
+
         Optional<RegisteredServer> server = proxy.getServer(serverName);
+
         if (server.isEmpty()) {
-            invocation.source().sendMessage(Component.text("It seems that this area is currently not available,\ntry again in a few minutes.", NamedTextColor.RED));
+            invocation.source().sendMessage(Component.text(
+                    "It seems that this area is currently not available,\ntry again in a few minutes.",
+                    NamedTextColor.RED
+            ));
             return;
         }
 
         try {
-            new ProcessBuilder("/bin/bash", "/data/DonutSMP/update_server.sh", serverName).start();
+            new ProcessBuilder(
+                    "/bin/bash",
+                    "/data/DonutSMP/update_server.sh",
+                    serverName
+            ).start();
 
-            invocation.source().sendMessage(Component.text("Updating " + serverName + "...", NamedTextColor.GREEN));
+            invocation.source().sendMessage(Component.text(
+                    "Updating " + serverName + "...",
+                    NamedTextColor.GREEN
+            ));
+
         } catch (IOException exception) {
             exception.printStackTrace();
 
@@ -138,17 +165,7 @@ public class GoliathCommand implements SimpleCommand {
     public List<String> suggest(Invocation invocation) {
         String[] args = invocation.arguments();
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("move")) {
-            String input = args[1].toLowerCase();
-
-            return proxy.getAllServers().stream()
-                    .map(registeredServer -> registeredServer.getServerInfo().getName())
-                    .filter(serverName -> serverName.toLowerCase().startsWith(input))
-                    .sorted()
-                    .toList();
-        }
-
-        if (args.length == 2 && args[0].equalsIgnoreCase("update")) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("move") || args[0].equalsIgnoreCase("update")) {
             String input = args[1].toLowerCase();
 
             return proxy.getAllServers().stream()

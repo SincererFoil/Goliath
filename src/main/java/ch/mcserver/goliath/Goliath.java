@@ -126,7 +126,7 @@ public class Goliath {
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("goliath").plugin(this).build(),
-                new GoliathCommand(proxy)
+                new GoliathCommand(proxy, this)
         );
 
         proxy.getCommandManager().register(
