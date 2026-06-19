@@ -96,6 +96,12 @@ public class GoliathCommand implements SimpleCommand {
             for (Player player : proxy.getAllPlayers()) {
                 player.disconnect(message);
             }
+            try {
+                new ProcessBuilder("/bin/bash", "/data/DonutSMP/deploy.sh").start();
+            } catch (IOException exception) {
+                exception.printStackTrace();
+                invocation.source().sendMessage(Component.text("Failed to update... ", NamedTextColor.RED));
+            }
             return;
         }
         String serverName = args[1];
