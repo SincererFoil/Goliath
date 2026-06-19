@@ -72,10 +72,33 @@
                 <version>3.5.0</version>
                 <executions>
                     <execution>
+                        <id>shade-jar</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>upload-jar</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>scp</executable>
+                            <arguments>
+                                <argument>${project.build.directory}/${project.build.finalName}.jar</argument>
+                                <argument>server@mcserver.ch:/data/download</argument>
+                            </arguments>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
