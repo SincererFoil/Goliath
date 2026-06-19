@@ -50,25 +50,36 @@ public class GoliathCommand implements SimpleCommand {
     }
     private void goliathMove(Invocation invocation) {
         String[] args = invocation.arguments();
-        if (!(invocation.source() instanceof Player)) {
-            invocation.source().sendMessage(Component.text("Only players can execute this command!"));
+
+        if (args.length < 2) {
+            invocation.source().sendMessage(Component.text("Usage: /goliath move <server>", NamedTextColor.RED));
             return;
         }
-        Player player = (Player) invocation.source();
+
+        if (!(invocation.source() instanceof Player player)) {
+            invocation.source().sendMessage(Component.text("Only players can execute this command!", NamedTextColor.RED));
+            return;
+        }
         String targetServer = args[1];
         Optional<RegisteredServer> server = proxy.getServer(targetServer);
-        if (!server.isPresent()) {
-            player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\n" +
-                    "try again in a few minutes.!", NamedTextColor.RED));
-            player.sendActionBar(Component.text("It seems that you are connecting to an area in maintenance,\n" +
-                    "try again in a few minutes.!", NamedTextColor.RED));
+        if (server.isEmpty()) {
+            player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));
+            return;
+        }
+
+        if (player.getCurrentServer().isPresent() && player.getCurrentServer().get().getServerInfo().getName().equalsIgnoreCase(targetServer)) {
+            player.sendMessage(Component.text("You are already connected to this server.", NamedTextColor.RED));
+            player.sendActionBar(Component.text("You are already connected to this server.", NamedTextColor.RED));
             return;
         }
         player.createConnectionRequest(server.get()).connect().thenAccept(result -> {
-                    if (!result.isSuccessful()) {
-                        player.sendMessage(Component.text("You are already connected to this Server", NamedTextColor.RED));
-                        player.sendActionBar(Component.text("You are already connected to this Server", NamedTextColor.RED));
-                    }});
+            if (!result.isSuccessful()) {
+                player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));
+                player.sendActionBar(Component.text("Area is currently not available.", NamedTextColor.RED));
+                return;
+            }
+            player.sendMessage(Component.text("Moved to " + targetServer + ".", NamedTextColor.GREEN));
+        });
     }
 
 
