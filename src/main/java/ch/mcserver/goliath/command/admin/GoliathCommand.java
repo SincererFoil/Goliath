@@ -27,7 +27,7 @@ public class GoliathCommand implements SimpleCommand {
      */
     @Override
     public void execute(Invocation invocation) {
-        if (invocation.arguments().length != 2) {
+        if (invocation.arguments().length < 1) {
             return;
         }
         String[] args = invocation.arguments();
@@ -42,7 +42,10 @@ public class GoliathCommand implements SimpleCommand {
         switch (range.toLowerCase()) {
             case "move":
                 goliathMove(player, args);
-                return;
+                break;
+            case "update":
+                goliathUpdate();
+                break;
             default:
                 return;
         }
@@ -60,6 +63,12 @@ public class GoliathCommand implements SimpleCommand {
         }
         player.createConnectionRequest(server.get()).connect().thenAccept(result -> {
                     if (!result.isSuccessful()) {player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));}});
+    }
+
+    private void goliathUpdate() {
+        for (Player player : proxy.getAllPlayers()) {
+            player.disconnect(Component.text("We are under maintenace.", NamedTextColor.RED).appendNewline().append(Component.text("For more information check updates channel.", NamedTextColor.WHITE)).appendNewline().append(Component.text("Join us in discord: ", NamedTextColor.GRAY)).append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW)));
+        }
     }
 
 

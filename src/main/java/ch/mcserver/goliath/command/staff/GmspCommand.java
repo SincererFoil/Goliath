@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.List;
 
+import static ch.mcserver.goliath.Goliath.playerRepository;
 import static ch.mcserver.goliath.player.ProxyPlayerManager.getPlayer;
 
 public class GmspCommand implements SimpleCommand {
@@ -53,11 +54,12 @@ public class GmspCommand implements SimpleCommand {
         if (playerObject.isGmsp()){
             playerObject.setGmsp(false);
             messenger.sendGmsp(player, false);
+            playerRepository.save(playerObject);
 
         } else {
             playerObject.setGmsp(true);
             messenger.sendGmsp(player, true);
-
+            playerRepository.save(playerObject);
         }
 
     }
