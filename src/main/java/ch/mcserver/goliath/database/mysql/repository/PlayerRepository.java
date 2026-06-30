@@ -85,10 +85,10 @@ public class PlayerRepository {
                         resultSet.getBoolean("sfmode"),
                         resultSet.getBoolean("debug_mode"),
                         resultSet.getBoolean("gmsp"),
-                        resultSet.getBoolean("vanished"),
                         resultSet.getFloat("fly_speed"),
                         resultSet.getLong("first_join"),
                         resultSet.getLong("last_join"),
+                        resultSet.getBoolean("creative"),
                         loadPunishments(playerUuid)
                 );
             }
@@ -124,10 +124,10 @@ public class PlayerRepository {
                         resultSet.getBoolean("sfmode"),
                         resultSet.getBoolean("debug_mode"),
                         resultSet.getBoolean("gmsp"),
-                        resultSet.getBoolean("vanished"),
                         resultSet.getFloat("fly_speed"),
                         resultSet.getLong("first_join"),
                         resultSet.getLong("last_join"),
+                        resultSet.getBoolean("creative"),
                         loadPunishments(playerUuid)
                 );
             }
@@ -189,7 +189,7 @@ public class PlayerRepository {
                 INSERT INTO players(
                     uuid, name, prefix, shards, money, kills, deaths,
                     blocks_broken, blocks_placed, sfmode, debug_mode,
-                    gmsp, vanished, fly_speed, current_server, first_join, last_join
+                    gmsp, fly_speed, current_server, first_join, last_join, creative
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
         )) {
@@ -208,12 +208,12 @@ public class PlayerRepository {
             statement.setBoolean(10, proxyPlayerObject.isSfmode());
             statement.setBoolean(11, proxyPlayerObject.isDebugMode());
             statement.setBoolean(12, proxyPlayerObject.isGmsp());
-            statement.setBoolean(13, proxyPlayerObject.isVanished());
 
-            statement.setFloat(14, proxyPlayerObject.getFlySpeed());
-            statement.setString(15, proxyPlayerObject.getCurrentServer());
-            statement.setLong(16, proxyPlayerObject.getFirstJoin());
-            statement.setLong(17, proxyPlayerObject.getLastJoin());
+            statement.setFloat(13, proxyPlayerObject.getFlySpeed());
+            statement.setString(14, proxyPlayerObject.getCurrentServer());
+            statement.setLong(15, proxyPlayerObject.getFirstJoin());
+            statement.setLong(16, proxyPlayerObject.getLastJoin());
+            statement.setBoolean(17, proxyPlayerObject.isCreative());
 
             statement.executeUpdate();
 
@@ -227,8 +227,8 @@ public class PlayerRepository {
         try (PreparedStatement statement = connection.prepareStatement(
                 """
                 UPDATE players
-                SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?, vanished = ?,
-                    fly_speed = ?, current_server = ?, last_join = ?
+                SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?,
+                    fly_speed = ?, current_server = ?, last_join = ?, creative = ?
                 WHERE uuid = ?
                 """
         )) {
@@ -238,10 +238,10 @@ public class PlayerRepository {
             statement.setBoolean(3, proxyPlayerObject.isSfmode());
             statement.setBoolean(4, proxyPlayerObject.isDebugMode());
             statement.setBoolean(5, proxyPlayerObject.isGmsp());
-            statement.setBoolean(6, proxyPlayerObject.isVanished());
-            statement.setFloat(7, proxyPlayerObject.getFlySpeed());
-            statement.setString(8, proxyPlayerObject.getCurrentServer());
-            statement.setLong(9, proxyPlayerObject.getLastJoin());
+            statement.setFloat(6, proxyPlayerObject.getFlySpeed());
+            statement.setString(7, proxyPlayerObject.getCurrentServer());
+            statement.setLong(8, proxyPlayerObject.getLastJoin());
+            statement.setBoolean(9, proxyPlayerObject.isCreative());
             statement.setString(10, proxyPlayerObject.getUuid().toString());
 
             statement.executeUpdate();
@@ -308,8 +308,8 @@ public class PlayerRepository {
         try (PreparedStatement statement = connection.prepareStatement(
                 """
                 UPDATE players
-                SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?, vanished = ?,
-                    fly_speed = ?, current_server = ?, last_join = ?
+                SET name = ?, prefix = ?, sfmode = ?, debug_mode = ?, gmsp = ?,
+                    fly_speed = ?, current_server = ?, last_join = ?, creative = ?
                 WHERE uuid = ?
                 """
         )) {
@@ -319,10 +319,10 @@ public class PlayerRepository {
             statement.setBoolean(3, proxyPlayerObject.isSfmode());
             statement.setBoolean(4, proxyPlayerObject.isDebugMode());
             statement.setBoolean(5, proxyPlayerObject.isGmsp());
-            statement.setBoolean(6, proxyPlayerObject.isVanished());
-            statement.setFloat(7, proxyPlayerObject.getFlySpeed());
-            statement.setString(8, proxyPlayerObject.getCurrentServer());
-            statement.setLong(9, proxyPlayerObject.getLastJoin());
+            statement.setFloat(6, proxyPlayerObject.getFlySpeed());
+            statement.setString(7, proxyPlayerObject.getCurrentServer());
+            statement.setLong(8, proxyPlayerObject.getLastJoin());
+            statement.setBoolean(9, proxyPlayerObject.isCreative());
             statement.setString(10, proxyPlayerObject.getUuid().toString());
 
             statement.executeUpdate();

@@ -18,12 +18,12 @@ public class ProxyPlayerObject {
     private boolean sfmode;
     private boolean debugMode;
     private boolean gmsp;
-    private boolean vanished;
 
     private float flySpeed;
 
     private long firstJoin;
     private long lastJoin;
+    private boolean creative;
 
     private List<PlayerPunishment> punishments = new ArrayList<>();
 
@@ -35,10 +35,10 @@ public class ProxyPlayerObject {
             boolean sfmode,
             boolean debugMode,
             boolean gmsp,
-            boolean vanished,
             float flySpeed,
             long firstJoin,
             long lastJoin,
+            boolean creative,
             List<PlayerPunishment> punishments
     ) {
 
@@ -51,12 +51,12 @@ public class ProxyPlayerObject {
         this.sfmode = sfmode;
         this.debugMode = debugMode;
         this.gmsp = gmsp;
-        this.vanished = vanished;
 
         this.flySpeed = flySpeed;
 
         this.firstJoin = firstJoin;
         this.lastJoin = lastJoin;
+        this.creative = creative;
 
         if (punishments != null) {
             this.punishments = punishments;
@@ -91,10 +91,6 @@ public class ProxyPlayerObject {
         return gmsp;
     }
 
-    public boolean isVanished() {
-        return vanished;
-    }
-
     public float getFlySpeed() {
         return flySpeed;
     }
@@ -105,6 +101,10 @@ public class ProxyPlayerObject {
 
     public long getLastJoin() {
         return lastJoin;
+    }
+
+    public boolean isCreative() {
+        return creative;
     }
 
     public List<PlayerPunishment> getPunishments() {
@@ -139,10 +139,6 @@ public class ProxyPlayerObject {
         this.gmsp = gmsp;
     }
 
-    public void setVanished(boolean vanished) {
-        this.vanished = vanished;
-    }
-
     public void setFlySpeed(float flySpeed) {
         this.flySpeed = flySpeed;
     }
@@ -153,6 +149,10 @@ public class ProxyPlayerObject {
 
     public void setLastJoin(long lastJoin) {
         this.lastJoin = lastJoin;
+    }
+
+    public void setCreative(boolean creative) {
+        this.creative = creative;
     }
 
     public void setPunishments(List<PlayerPunishment> punishments) {

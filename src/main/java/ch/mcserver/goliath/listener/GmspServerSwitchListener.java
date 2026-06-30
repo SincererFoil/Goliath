@@ -1,6 +1,7 @@
 package ch.mcserver.goliath.listener;
 
 import ch.mcserver.goliath.player.ProxyPlayerObject;
+import ch.mcserver.goliath.pluginmessenger.CreativeMessenger;
 import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
@@ -15,12 +16,14 @@ public class GmspServerSwitchListener {
 
     private final ProxyServer proxy;
     private final Object plugin;
-    private final GmspMessenger messenger;
+    private final GmspMessenger gmspMessenger;
+    private final CreativeMessenger creativeMessenger;
 
-    public GmspServerSwitchListener(ProxyServer proxy, Object plugin, GmspMessenger messenger) {
+    public GmspServerSwitchListener(ProxyServer proxy, Object plugin, GmspMessenger gmspMessenger, CreativeMessenger creativeMessenger) {
         this.proxy = proxy;
         this.plugin = plugin;
-        this.messenger = messenger;
+        this.gmspMessenger = gmspMessenger;
+        this.creativeMessenger = creativeMessenger;
     }
 
     @Subscribe
@@ -28,20 +31,24 @@ public class GmspServerSwitchListener {
 
         Player player = event.getPlayer();
 
-        ProxyPlayerObject proxyPlayerObject =
-                getPlayer(player.getUniqueId());
+        ProxyPlayerObject proxyPlayerObject = getPlayer(player.getUniqueId());
 
         if (proxyPlayerObject == null) {
             return;
         }
 
-        if (!proxyPlayerObject.isGmsp()) {
-            return;
+        if (proxyPlayerObject.isGmsp()) {
+            proxy.getScheduler()
+                    .buildTask(plugin, () -> gmspMessenger.sendGmsp(player, true))
+                    .delay(500, TimeUnit.MILLISECONDS)
+                    .schedule();
         }
 
-        proxy.getScheduler()
-                .buildTask(plugin, () -> messenger.sendGmsp(player, true))
-                .delay(500, TimeUnit.MILLISECONDS)
-                .schedule();
+        if (proxyPlayerObject.isCreative()) {
+            proxy.getScheduler()
+                    .buildTask(plugin, () -> creativeMessenger.sendCreative(player, true))
+                    .delay(500, TimeUnit.MILLISECONDS)
+                    .schedule();
+        }
     }
 }

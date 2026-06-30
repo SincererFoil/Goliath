@@ -58,10 +58,10 @@ public class ProxyPlayerManager {
                     false,
                     false,
                     false,
-                    false,
                     0.1f,
                     now,
                     now,
+                    false,
                     null
             );
 

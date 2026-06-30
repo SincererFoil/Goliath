@@ -115,12 +115,14 @@ public class Goliath {
         HistroyLogTypes historyLogTypes = new HistroyLogTypes(proxy, snapshotRequestManager, historyRepository);
 
         GmspMessenger gmspMessenger = new GmspMessenger(proxy);
+        ch.mcserver.goliath.pluginmessenger.CreativeMessenger creativeMessenger = new ch.mcserver.goliath.pluginmessenger.CreativeMessenger(proxy);
 
         proxy.getEventManager().register(this, new ProxyPlayerManager());
+        proxy.getEventManager().register(this, creativeMessenger);
         proxy.getEventManager().register(this, new CommandHider());
         proxy.getEventManager().register(this, new CommandBlocker());
         proxy.getEventManager().register(this, new PunishmentConnectListener());
-        proxy.getEventManager().register(this, new GmspServerSwitchListener(proxy, this, gmspMessenger));
+        proxy.getEventManager().register(this, new GmspServerSwitchListener(proxy, this, gmspMessenger, creativeMessenger));
         proxy.getEventManager().register(this, new HistoryEventListener(historyLogTypes, proxy, this));
         proxy.getEventManager().register(this, new JoinController(proxy, playerLocationRepository));
 
