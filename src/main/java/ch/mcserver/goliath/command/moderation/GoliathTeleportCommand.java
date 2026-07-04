@@ -1,6 +1,7 @@
 package ch.mcserver.goliath.command.moderation;
 
 import ch.mcserver.goliath.Goliath;
+import ch.mcserver.goliath.database.mysql.repository.PlayerLocationObject;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
 import com.velocitypowered.api.command.SimpleCommand;
@@ -71,7 +72,18 @@ public class GoliathTeleportCommand implements SimpleCommand {
 
         } else {
 
-            optionalTargetServer = proxy.getServer(playerObject.getCurrentServer());
+            PlayerLocationObject location =
+                    Goliath.playerLocationRepository.loadPlayer(playerObject.getUuid());
+
+            if (location == null) {
+                player.sendMessage(Component.text(
+                        "No location data found for " + targetRawName + ".",
+                        NamedTextColor.RED
+                ));
+                return;
+            }
+
+            optionalTargetServer = proxy.getServer(location.getServerName());
         }
 
         if (optionalTargetServer.isEmpty()) {
