@@ -100,20 +100,15 @@ public class GoliathCommand implements SimpleCommand {
             for (Player player : proxy.getAllPlayers()) {
                 player.disconnect(message);
             }
+            try {
+                new ProcessBuilder(
+                        "/bin/bash",
+                        "/data/DonutSMP/deploy.sh"
+                ).start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-            proxy.getScheduler()
-                    .buildTask(plugin, () -> {
-                        try {
-                            new ProcessBuilder(
-                                    "/bin/bash",
-                                    "/data/DonutSMP/deploy.sh"
-                            ).start();
-                        } catch (IOException exception) {
-                            exception.printStackTrace();
-                        }
-                    })
-                    .delay(2, TimeUnit.SECONDS)
-                    .schedule();
 
             return;
         }
