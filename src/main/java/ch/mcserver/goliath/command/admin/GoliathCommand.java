@@ -8,6 +8,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,8 @@ public class GoliathCommand implements SimpleCommand {
 
 
     }
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
+
     private void goliathMove(Invocation invocation) {
         String[] args = invocation.arguments();
 
@@ -63,26 +66,41 @@ public class GoliathCommand implements SimpleCommand {
             invocation.source().sendMessage(Component.text("Only players can execute this command!", NamedTextColor.RED));
             return;
         }
+
         String targetServer = args[1];
         Optional<RegisteredServer> server = proxy.getServer(targetServer);
         if (server.isEmpty()) {
-            player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));
+            sendMaintenanceMessage(player);
             return;
         }
 
-        if (player.getCurrentServer().isPresent() && player.getCurrentServer().get().getServerInfo().getName().equalsIgnoreCase(targetServer)) {
+        if (player.getCurrentServer().isPresent()
+                && player.getCurrentServer().get().getServerInfo().getName().equalsIgnoreCase(targetServer)) {
             player.sendMessage(Component.text("You are already connected to this server.", NamedTextColor.RED));
             player.sendActionBar(Component.text("You are already connected to this server.", NamedTextColor.RED));
             return;
         }
-        player.createConnectionRequest(server.get()).connect().thenAccept(result -> {
-            if (!result.isSuccessful()) {
-                player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));
-                player.sendActionBar(Component.text("Area is currently not available.", NamedTextColor.RED));
-                return;
-            }
-            player.sendMessage(Component.text("Moved to " + targetServer + ".", NamedTextColor.GREEN));
-        });
+
+        player.createConnectionRequest(server.get())
+                .connect()
+                .orTimeout(2, TimeUnit.SECONDS)
+                .handle((result, throwable) -> {
+                    if (throwable != null || !result.isSuccessful()) {
+                        player.sendMessage(Component.text("It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.", NamedTextColor.RED));
+                        player.sendActionBar(Component.text("Area is currently not available.", NamedTextColor.RED));
+                        return null;
+                    }
+
+                    player.sendMessage(Component.text("Moved to " + targetServer + ".", NamedTextColor.GREEN));
+                    return null;
+                });
+    }
+
+    private void sendMaintenanceMessage(Player player) {
+        player.sendMessage(Component.text(
+                "It seems that you are connecting to an area in maintenance,\ntry again in a few minutes.",
+                NamedTextColor.RED));
+        player.sendActionBar(Component.text("Area is currently not available.", NamedTextColor.RED));
     }
 
 

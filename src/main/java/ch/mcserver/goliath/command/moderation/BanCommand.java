@@ -43,7 +43,7 @@ public class BanCommand implements SimpleCommand {
 
         if (!playerRepository.existsByUsername(targetName)) {
             invocation.source().sendMessage(
-                    Component.text("Player does not exist", NamedTextColor.RED)
+                    Component.text("This Player has never logged in the server.", NamedTextColor.RED)
             );
             return;
         }
