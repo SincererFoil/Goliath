@@ -2,7 +2,7 @@ package ch.mcserver.goliath.player.task;
 
 import ch.mcserver.goliath.player.ProxyPlayerManager;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
-import com.google.common.eventbus.Subscribe;
+import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 

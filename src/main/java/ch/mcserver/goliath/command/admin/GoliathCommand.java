@@ -104,7 +104,7 @@ public class GoliathCommand implements SimpleCommand {
                 new ProcessBuilder(
                         "/bin/bash",
                         "/data/DonutSMP/deploy.sh"
-                ).start();
+                ).inheritIO().start();
             } catch (IOException e) {
                 e.printStackTrace();
             }

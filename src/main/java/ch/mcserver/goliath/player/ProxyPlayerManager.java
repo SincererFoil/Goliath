@@ -1,18 +1,21 @@
 package ch.mcserver.goliath.player;
 
 import ch.mcserver.goliath.Goliath;
+import com.velocitypowered.api.event.EventTask;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.proxy.Player;
+import net.kyori.adventure.text.Component;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ProxyPlayerManager {
 
-    private static final Map<UUID, ProxyPlayerObject> players = new HashMap<>();
+    private static final Map<UUID, ProxyPlayerObject> players = new ConcurrentHashMap<>();
 
     public static void addPlayer(ProxyPlayerObject playerObject) {
         players.put(playerObject.getUuid(), playerObject);
@@ -31,61 +34,74 @@ public class ProxyPlayerManager {
     }
 
     @Subscribe
-    public void onPlayerConnect(PostLoginEvent event) {
+    public EventTask onPlayerConnect(PostLoginEvent event) {
+        return EventTask.async(() -> {
 
-        Player player = event.getPlayer();
+            Player player = event.getPlayer();
+            UUID uuid = player.getUniqueId();
 
-        UUID uuid = player.getUniqueId();
+            try {
+                ProxyPlayerObject playerObject;
 
-        ProxyPlayerObject playerObject;
+                if (Goliath.playerRepository.exists(uuid)) {
 
-        if (Goliath.playerRepository.exists(uuid)) {
+                    playerObject = Goliath.playerRepository.loadPlayer(uuid);
+                    playerObject.setSfmode(false);
+                    playerObject.setGmsp(false);
 
-            playerObject = Goliath.playerRepository.loadPlayer(uuid);
-            playerObject.setSfmode(false);
-            playerObject.setGmsp(false);
+                } else {
 
+                    long now = System.currentTimeMillis();
 
-        } else {
+                    playerObject = new ProxyPlayerObject(
+                            uuid,
+                            player.getUsername(),
+                            "Player",
+                            "none",
+                            false,
+                            false,
+                            false,
+                            0.1f,
+                            now,
+                            now,
+                            false,
+                            new ArrayList<>()
+                    );
 
-            long now = System.currentTimeMillis();
+                    Goliath.playerRepository.create(playerObject);
+                }
 
-            playerObject = new ProxyPlayerObject(
-                    uuid,
-                    player.getUsername(),
-                    "Player",
-                    "none",
-                    false,
-                    false,
-                    false,
-                    0.1f,
-                    now,
-                    now,
-                    false,
-                    null
-            );
+                addPlayer(playerObject);
 
-            Goliath.playerRepository.create(playerObject);
-        }
-
-        addPlayer(playerObject);
+            } catch (Exception e) {
+                Goliath.LOGGER.error("Failed to load player data for {}", uuid, e);
+                player.disconnect(Component.text("Fehler beim Laden deiner Daten. Bitte erneut verbinden."));
+            }
+        });
     }
 
     @Subscribe
-    public void onPlayerDisconnect(DisconnectEvent event) {
+    public EventTask onPlayerDisconnect(DisconnectEvent event) {
+        return EventTask.async(() -> {
 
-        Player player = event.getPlayer();
+            Player player = event.getPlayer();
+            UUID uuid = player.getUniqueId();
+            ProxyPlayerObject playerObject = getPlayer(uuid);
 
-        ProxyPlayerObject playerObject = getPlayer(player.getUniqueId());
+            if (playerObject == null) {
+                return;
+            }
 
-        if (playerObject == null) {
-            return;
-        }
-        playerObject.setSfmode(false);
-        playerObject.setGmsp(false);
+            playerObject.setSfmode(false);
+            playerObject.setGmsp(false);
 
-        Goliath.playerRepository.savePlayerDataOnly(playerObject);
-
-        removePlayer(player.getUniqueId());
+            try {
+                Goliath.playerRepository.savePlayerDataOnly(playerObject);
+            } catch (Exception e) {
+                Goliath.LOGGER.error("Failed to save player data for {}", uuid, e);
+            } finally {
+                removePlayer(uuid);
+            }
+        });
     }
 }

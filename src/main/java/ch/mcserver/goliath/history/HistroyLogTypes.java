@@ -1,6 +1,11 @@
 package ch.mcserver.goliath.history;
 
+import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mongodb.repository.HistoryEventRepository;
+import ch.mcserver.goliath.database.mysql.repository.PlayerLocationObject;
+import ch.mcserver.goliath.database.mysql.repository.PlayerLocationRepository;
+import ch.mcserver.goliath.player.ProxyPlayerManager;
+import ch.mcserver.goliath.player.ProxyPlayerObject;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -100,11 +105,17 @@ public class HistroyLogTypes {
 
         String historyTitle = "PlayerQuit DISCONNECTING FREE";
 
+        PlayerLocationObject locationObject = Goliath.playerLocationRepository.loadPlayer(playerUuid);
+
+        if (locationObject == null) {
+            return;
+        }
+
         repository.createEvent(
                 playerUuid,
                 "Disconnect",
                 historyTitle,
-                server,
+                locationObject.getServerName(),
                 historyId.toString()
         );
     }
