@@ -160,7 +160,7 @@ public class GoliathCommand implements SimpleCommand {
     public List<String> suggest(Invocation invocation) {
         String[] args = invocation.arguments();
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("move") || args[0].equalsIgnoreCase("update")) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("move") || args[0].equalsIgnoreCase("update"))) {
             String input = args[1].toLowerCase();
 
             return proxy.getAllServers().stream()

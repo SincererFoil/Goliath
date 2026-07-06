@@ -105,10 +105,9 @@ public class GoliathTeleportCommand implements SimpleCommand {
                     targetServer
             );
 
-            player.sendMessage(Component.text(
-                    "Teleported to " + targetRawName + ".",
-                    NamedTextColor.GREEN
-            ));
+            player.sendMessage(Component.text("Teleported to ", NamedTextColor.GREEN)
+                    .append(Component.text(targetRawName + ".", NamedTextColor.GRAY)
+                    ));
             return;
         }
 
@@ -130,10 +129,9 @@ public class GoliathTeleportCommand implements SimpleCommand {
                             targetServer
                     );
 
-                    player.sendMessage(Component.text(
-                            "Teleported to " + targetRawName + ".",
-                            NamedTextColor.GREEN
-                    ));
+                    player.sendMessage(Component.text("Teleported to ", NamedTextColor.GREEN)
+                            .append(Component.text(targetRawName + ".", NamedTextColor.GRAY)
+                            ));
                 });
     }
 

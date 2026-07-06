@@ -35,7 +35,7 @@ public class JoinController {
 
         Optional<RegisteredServer> optionalServer = proxy.getServer(location.getServerName());
         if (optionalServer.isEmpty()) {
-            player.disconnect(Component.text("You should make a ticket.", NamedTextColor.RED).append(Component.text("Error: #G404NF", NamedTextColor.RED)));
+            player.disconnect(Component.text("You should make a ticket. ", NamedTextColor.RED).appendNewline().append(Component.text("Error: #G404NF", NamedTextColor.RED)));
             return;
         }
         if (player.getCurrentServer().isPresent()) {
