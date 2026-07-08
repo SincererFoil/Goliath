@@ -1,7 +1,6 @@
 package ch.mcserver.goliath.history;
 
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.Player;
@@ -47,11 +46,6 @@ public class HistoryEventListener {
         }
     }
 
-    @Subscribe
-    public void onPlayerDiconnect(DisconnectEvent event) {
-        Player player = event.getPlayer();
-        logTypes.DisconnectHistory(player.getUniqueId());
-    }
     @Subscribe
     public void onPlayer(KickedFromServerEvent event) {
         Player player = event.getPlayer();

@@ -1,17 +1,9 @@
 package ch.mcserver.goliath.history;
 
-import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mongodb.repository.HistoryEventRepository;
-import ch.mcserver.goliath.database.mysql.repository.PlayerLocationObject;
-import ch.mcserver.goliath.database.mysql.repository.PlayerLocationRepository;
-import ch.mcserver.goliath.player.ProxyPlayerManager;
-import ch.mcserver.goliath.player.ProxyPlayerObject;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public class HistroyLogTypes {
@@ -87,39 +79,6 @@ public class HistroyLogTypes {
         messenger.requestSnapshot(playerUuid, historyId.toString(), "Join");
         // Calls the messenger to send a message to the server where the player is located
     }
-
-    public void DisconnectHistory(UUID playerUuid) {
-        Optional<Player> optionalPlayer = proxy.getPlayer(playerUuid);
-
-        String server = "UNKNOWN";
-
-        if (optionalPlayer.isPresent()) {
-            Player player = optionalPlayer.get();
-
-            server = player.getCurrentServer()
-                    .map(connection -> connection.getServerInfo().getName())
-                    .orElse("UNKNOWN");
-        }
-
-        UUID historyId = UUID.randomUUID();
-
-        String historyTitle = "PlayerQuit DISCONNECTING FREE";
-
-        PlayerLocationObject locationObject = Goliath.playerLocationRepository.loadPlayer(playerUuid);
-
-        if (locationObject == null) {
-            return;
-        }
-
-        repository.createEvent(
-                playerUuid,
-                "Disconnect",
-                historyTitle,
-                locationObject.getServerName(),
-                historyId.toString()
-        );
-    }
-
 
     public void kickHistory(UUID playerUuid, RegisteredServer server, String reason) {
         UUID historyId = UUID.randomUUID();

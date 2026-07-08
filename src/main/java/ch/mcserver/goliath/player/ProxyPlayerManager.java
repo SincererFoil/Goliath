@@ -29,6 +29,7 @@ public class ProxyPlayerManager {
         return players.containsKey(uuid);
     }
 
+
     public static void removePlayer(UUID uuid) {
         players.remove(uuid);
     }
