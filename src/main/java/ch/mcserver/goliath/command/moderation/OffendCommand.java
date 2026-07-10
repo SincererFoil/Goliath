@@ -209,6 +209,7 @@ public class OffendCommand implements SimpleCommand {
         put("irl-trading-ownership", 365L * 24 * 60 * 60 * 1000);
 
         put("inappropriate-skin", 7L * 24 * 60 * 60 * 1000);
+        put("inappropriate-map-art", 7L * 24 * 60 * 60 * 1000);
         put("inappropriate-proximity", 7L * 24 * 60 * 60 * 1000);
         put("inappropriate-language", 3L * 24 * 60 * 60 * 1000);
         put("inappropriate-builds", 14L * 24 * 60 * 60 * 1000);
@@ -265,6 +266,7 @@ public class OffendCommand implements SimpleCommand {
         put("irl-trading-ownership", "You are temporarily banned for IRL trading ownership.");
 
         put("inappropriate-skin", "You are temporarily banned for having an inappropriate skin.");
+        put("inappropriate-map-art", "You are temporarily banned for having an inappropriate map art");
         put("inappropriate-proximity", "You are temporarily muted for inappropriate proximity chat.");
         put("inappropriate-language", "You are temporarily muted for inappropriate language.");
         put("inappropriate-builds", "You are temporarily banned for creating inappropriate builds.");
