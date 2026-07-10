@@ -371,6 +371,6 @@ public class OffendCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.offend");
+        return invocation.source().hasPermission("goliath.staff.offend");
     }
 }

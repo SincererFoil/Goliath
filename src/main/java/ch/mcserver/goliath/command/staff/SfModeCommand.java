@@ -92,7 +92,7 @@ public class SfModeCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.sfmode");
+        return invocation.source().hasPermission("goliath.staff.sfmode");
     }
 
     @Subscribe

@@ -203,6 +203,6 @@ public class GoliathCommand implements SimpleCommand {
      */
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.use");
+        return invocation.source().hasPermission("goliath.command.use");
     }
 }

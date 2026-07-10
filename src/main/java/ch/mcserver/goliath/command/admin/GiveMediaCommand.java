@@ -91,6 +91,6 @@ public class GiveMediaCommand implements SimpleCommand {
      */
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.GiveMediaCommand");
+        return invocation.source().hasPermission("goliath.staff.givemedia");
     }
 }

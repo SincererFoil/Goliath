@@ -74,6 +74,6 @@ public class WhereAmICommand implements SimpleCommand {
      */
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.whereami");
+        return invocation.source().hasPermission("goliath.util.whereami");
     }
 }

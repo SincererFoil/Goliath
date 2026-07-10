@@ -148,6 +148,6 @@ public class BanCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.ban");
+        return invocation.source().hasPermission("goliath.staff.ban");
     }
 }

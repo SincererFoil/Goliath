@@ -122,6 +122,6 @@ public class CheckBanCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.checkban");
+        return invocation.source().hasPermission("goliath.staff.checkban");
     }
 }

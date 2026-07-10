@@ -156,6 +156,6 @@ public class GoliathTeleportCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.gtp");
+        return invocation.source().hasPermission("goliath.staff.gtp");
     }
 }

@@ -81,6 +81,6 @@ public class UnbanCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission("GoliathCommand.unban");
+        return invocation.source().hasPermission("goliath.staff.unban");
     }
 }

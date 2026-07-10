@@ -44,7 +44,7 @@ public class FindPlayerCommand implements SimpleCommand {
 
         String rawServerName = server.getServerInfo().getName();
 
-        if (!invocation.source().hasPermission("goliath.findplayer")) {
+        if (!invocation.source().hasPermission("goliath.util.findplayer")) {
             String lower = rawServerName.toLowerCase();
 
             String serverName = "overworld";
