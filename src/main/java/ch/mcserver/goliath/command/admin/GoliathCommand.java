@@ -1,5 +1,6 @@
 package ch.mcserver.goliath.command.admin;
 
+import ch.mcserver.goliath.Goliath;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -135,13 +136,6 @@ public class GoliathCommand implements SimpleCommand {
 
         Optional<RegisteredServer> server = proxy.getServer(serverName);
 
-        if (server.isEmpty()) {
-            invocation.source().sendMessage(Component.text(
-                    "It seems that this area is currently not available,\ntry again in a few minutes.",
-                    NamedTextColor.RED
-            ));
-            return;
-        }
 
         try {
             new ProcessBuilder(

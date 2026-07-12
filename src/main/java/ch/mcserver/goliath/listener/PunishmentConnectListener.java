@@ -5,13 +5,14 @@ import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
 import ch.mcserver.goliath.player.punishments.PlayerPunishment;
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.PreLoginEvent;
+import com.velocitypowered.api.event.connection.LoginEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 public class PunishmentConnectListener {
 
@@ -19,16 +20,15 @@ public class PunishmentConnectListener {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     @Subscribe
-    public void onPreLogin(PreLoginEvent event) {
+    public void onLogin(LoginEvent event) {
 
         PlayerRepository playerRepository = Goliath.playerRepository;
-        String username = event.getUsername();
-
-        if (!playerRepository.existsByUsername(username)) {
+        UUID playerUUID = event.getPlayer().getUniqueId();
+        if (!playerRepository.exists(playerUUID)) {
             return;
         }
 
-        ProxyPlayerObject targetObject = playerRepository.loadPlayerByUsername(username);
+        ProxyPlayerObject targetObject = playerRepository.loadPlayer(playerUUID);
 
         if (targetObject == null || targetObject.getPunishments() == null) {
             return;
@@ -39,7 +39,7 @@ public class PunishmentConnectListener {
         for (PlayerPunishment punishment : targetObject.getPunishments()) {
 
             if (punishment.isPermanent()) {
-                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
+                event.setResult(LoginEvent.ComponentResult.denied(
                         Component.text("You are permanently banned from this server!", NamedTextColor.RED)
                                 .appendNewline()
                                 .append(Component.text("Reason: " + punishment.getReason(), NamedTextColor.WHITE))
@@ -57,7 +57,7 @@ public class PunishmentConnectListener {
 
             String dateText = punishment.getCreatedAt().format(FORMATTER);
 
-            event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
+            event.setResult(LoginEvent.ComponentResult.denied(
                     Component.text("You are banned from this server!", NamedTextColor.RED)
                             .appendNewline()
                             .append(Component.text("Expires in: " + punishment.getExpiresAt().format(FORMATTER), NamedTextColor.WHITE))
