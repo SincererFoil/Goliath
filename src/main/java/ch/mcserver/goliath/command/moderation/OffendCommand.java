@@ -10,6 +10,9 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import javax.naming.Name;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +27,15 @@ public class OffendCommand implements SimpleCommand {
         this.proxy = proxy;
     }
 
+    public static String formatDuration(Duration duration) {
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+
+        return days + " Days "
+                + hours + " Hours "
+                + minutes + " Minutes";
+    }
     @Override
     public void execute(Invocation invocation) {
         String[] args = invocation.arguments();
@@ -102,19 +114,20 @@ public class OffendCommand implements SimpleCommand {
             long days = TimeUnit.MILLISECONDS.toDays(banTime);
             durationText = days + " day";
         }
-
+        String ipAddress = proxy.getPlayer(targetObject.getName()).orElseThrow(() -> new IllegalArgumentException("Player does not exist!")).getRemoteAddress().toString();
         ZonedDateTime createdAt = ZonedDateTime.now(ZoneId.of("Europe/Zurich"));
         ZonedDateTime expiresAt = createdAt.plusSeconds(banTime / 1000);
 
         PlayerPunishment playerPunishment = new PlayerPunishment(
                 offendCount,
                 banText,
-                null,
+                ipAddress,
                 staffName,
                 createdAt,
                 expiresAt,
                 isWiped,
                 staffNote,
+                BanIdGenerator.generateBanId(),
                 false
         );
 
@@ -127,6 +140,7 @@ public class OffendCommand implements SimpleCommand {
                 "Punishment executed with success. Offension: " + offendCount,
                 NamedTextColor.RED
         ));
+
 
         invocation.source().sendMessage(Component.text("Temporarily banned player ", NamedTextColor.RED)
                 .append(Component.text(targetObject.getName(), NamedTextColor.WHITE))
@@ -141,16 +155,29 @@ public class OffendCommand implements SimpleCommand {
         if (targetPlayer.isPresent()) {
             Player target = targetPlayer.get();
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-            String dateText = playerPunishment.getCreatedAt().format(formatter);
+            Duration remaining = Duration.between(ZonedDateTime.now(ZoneId.of("Europe/Zurich")), expiresAt);
 
-            target.disconnect(Component.text("You are banned from this server!", NamedTextColor.RED)
+            long totalMinutes = Math.max(0, remaining.toMinutes());
+            long days = totalMinutes / (24 * 60);
+            long hours = (totalMinutes % (24 * 60)) / 60;
+            long minutes = totalMinutes % 60;
+
+            String formatted = days + " Days " + hours + " Hours " + minutes + " Minutes";
+
+            target.disconnect(Component.text(banText, NamedTextColor.RED)
                     .appendNewline()
-                    .append(Component.text("Expires in: " + durationText, NamedTextColor.WHITE))
                     .appendNewline()
-                    .append(Component.text("Date: " + dateText, NamedTextColor.WHITE))
+                    .append(Component.text("Time Left: ", NamedTextColor.GRAY))
+                    .append(Component.text(formatted, NamedTextColor.WHITE))
                     .appendNewline()
-                    .append(Component.text("Reason: " + banText, NamedTextColor.WHITE)));
+                    .appendNewline()
+                    .append(Component.text("Ban ID: ", NamedTextColor.GRAY))
+                    .append(Component.text(playerPunishment.getBanId(), NamedTextColor.WHITE))
+                    .appendNewline()
+                    .appendNewline()
+                    .append(Component.text("You may be able to appeal this ban on ", NamedTextColor.GRAY))
+                    .appendNewline()
+                    .append(Component.text("discord/donutsmp", NamedTextColor.WHITE)));
         }
     }
 

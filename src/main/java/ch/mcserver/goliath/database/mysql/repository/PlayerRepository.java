@@ -169,6 +169,7 @@ public class PlayerRepository {
                                             : expiresAtTimestamp.toLocalDateTime().atZone(ZONE),
                                     resultSet.getBoolean("wiped"),
                                     resultSet.getString("staff_note"),
+                                    resultSet.getString("ban_id"),
                                     resultSet.getBoolean("permanent")
                             )
                     );
@@ -268,8 +269,8 @@ public class PlayerRepository {
                 """
                 INSERT INTO player_punishments(
                     player_uuid, offense_level, reason, punished_by,
-                    created_at, expires_at, wiped, staff_note, permanent
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    created_at, expires_at, wiped, staff_note, ban_id, permanent
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
         )) {
 
@@ -294,7 +295,8 @@ public class PlayerRepository {
 
             statement.setBoolean(7, punishment.isWiped());
             statement.setString(8, punishment.getStaffNote());
-            statement.setBoolean(9, punishment.isPermanent());
+            statement.setString(9, punishment.getBanId());
+            statement.setBoolean(10, punishment.isPermanent());
 
             statement.executeUpdate();
 

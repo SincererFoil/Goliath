@@ -57,6 +57,7 @@ public class CheckBanCommand implements SimpleCommand {
                 staffName = "Console";
             }
 
+
             if (punishment.isPermanent()) {
                 player.sendMessage(
                         Component.text(targetRawName, NamedTextColor.WHITE)

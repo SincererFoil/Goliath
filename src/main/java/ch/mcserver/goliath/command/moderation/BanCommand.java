@@ -10,15 +10,20 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import javax.naming.LinkRef;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 public class BanCommand implements SimpleCommand {
 
     private final ProxyServer proxy;
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public BanCommand(ProxyServer proxy) {
         this.proxy = proxy;
@@ -31,13 +36,34 @@ public class BanCommand implements SimpleCommand {
 
         if (args.length < 2) {
             invocation.source().sendMessage(
-                    Component.text("Usage: /ban <player> <reason>", NamedTextColor.RED)
+                    Component.text("Wrong Usage: /ban <player> <reason> {note: <note>}", NamedTextColor.RED)
             );
             return;
         }
 
         String targetName = args[0];
-        String reason = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        String reasonInput = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+
+        int noteIndex = reasonInput.toLowerCase().indexOf("note:");
+
+        String reason = reasonInput.trim();
+        String note = null;
+
+        if (noteIndex != -1) {
+            reason = reasonInput.substring(0, noteIndex).trim();
+            note = reasonInput.substring(noteIndex + "note:".length()).trim();
+
+            if (note.isEmpty()) {
+                note = null;
+            }
+        }
+
+        if (reason.isEmpty()) {
+            invocation.source().sendMessage(
+                    Component.text("You need to provide a reason.", NamedTextColor.RED)
+            );
+            return;
+        }
 
         PlayerRepository playerRepository = Goliath.playerRepository;
 
@@ -57,15 +83,18 @@ public class BanCommand implements SimpleCommand {
             staffName = player.getUsername();
         }
 
+        String ipAddress = proxy.getPlayer(targetName).orElseThrow(() -> new IllegalArgumentException("Player does not exist!")).getRemoteAddress().toString();
+        ZonedDateTime date = ZonedDateTime.now(ZoneId.of("Europe/Zurich"));
         PlayerPunishment punishment = new PlayerPunishment(
                 0,
-                "You are permanently banned for " + reason + ".",
-                null,
+                reason,
+                ipAddress,
                 staffName,
-                ZonedDateTime.now(ZoneId.of("Europe/Zurich")),
+                date,
                 null,
                 true,
-                "null",
+                note,
+                BanIdGenerator.generateBanId(),
                 true
         );
 
@@ -107,15 +136,22 @@ public class BanCommand implements SimpleCommand {
             Player target = targetPlayer.get();
 
             target.disconnect(
-                    Component.text(
-                                    "You are permanently banned from this server!",
-                                    NamedTextColor.RED
-                            )
+                    Component.text(reason, NamedTextColor.RED)
                             .appendNewline()
-                            .append(Component.text(
-                                    "Reason: " + punishment.getReason(),
-                                    NamedTextColor.WHITE
-                            ))
+                            .appendSpace()
+                            .appendNewline()
+                            .append(Component.text("Date: ", NamedTextColor.GRAY))
+                            .append(Component.text(date.format(formatter), NamedTextColor.WHITE))
+                            .appendNewline()
+                            .appendSpace()
+                            .appendNewline()
+                            .append(Component.text("Ban ID: ", NamedTextColor.GRAY))
+                            .append(Component.text(punishment.getBanId(), NamedTextColor.WHITE))
+                            .appendNewline()
+                            .append(Component.text("You may be able to appeal to this ban on", NamedTextColor.GRAY))
+                            .appendNewline()
+                            .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
+
             );
         }
     }

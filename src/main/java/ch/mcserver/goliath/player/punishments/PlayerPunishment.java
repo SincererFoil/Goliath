@@ -14,9 +14,10 @@ public class PlayerPunishment {
     private ZonedDateTime expiresAt;
     private boolean wiped;
     private String staffNote;
+    private String banId;
     private boolean permanent;
 
-    public PlayerPunishment(int offenseLevel, String reason, String ipAddress, String punishedBy, ZonedDateTime createdAt, ZonedDateTime expiresAt, boolean wiped, String staffNote,  boolean permanent) {
+    public PlayerPunishment(int offenseLevel, String reason, String ipAddress, String punishedBy, ZonedDateTime createdAt, ZonedDateTime expiresAt, boolean wiped, String staffNote, String banId, boolean permanent) {
         this.offenseLevel = offenseLevel;
         this.reason = reason;
         this.ipAddress = ipAddress;
@@ -25,11 +26,16 @@ public class PlayerPunishment {
         this.expiresAt = expiresAt;
         this.wiped = wiped;
         this.staffNote = staffNote;
+        this.banId = banId;
         this.permanent = permanent;
     }
 
     public int getOffenseLevel() {
         return offenseLevel;
+    }
+
+    public String getBanId() {
+        return banId;
     }
 
     public String getReason() {
@@ -97,6 +103,10 @@ public class PlayerPunishment {
 
     public void setWiped(boolean wiped) {
         this.wiped = wiped;
+    }
+
+    public void setBanId(String banId) {
+        this.banId = banId;
     }
 }
 
