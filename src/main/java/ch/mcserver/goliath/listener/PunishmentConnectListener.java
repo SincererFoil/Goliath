@@ -41,7 +41,6 @@ public class PunishmentConnectListener {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
                         Component.text(punishment.getReason(), NamedTextColor.RED)
                                 .appendNewline()
-                                .appendNewline()
                                 .append(Component.text("Date: ", NamedTextColor.GRAY))
                                 .append(Component.text(punishment.getCreatedAt().format(DATE_FORMATTER), NamedTextColor.WHITE))
                                 .appendNewline()
