@@ -30,28 +30,26 @@ public class HistroyLogTypes {
 
 
 
-    /**
-     * History Log Event switchTarget
-     * gets executed when a player is switching to a new server.
-     *
-     * @param playerUuid Player's UniqueID
-     * @param server
-     */
-    public void switchTarget(UUID playerUuid, RegisteredServer server) {
-        String serverName = server.getServerInfo().getName();
-        // Saves the name of the current server
+    public void switchTarget(UUID playerUuid, RegisteredServer oldServer, RegisteredServer newServer) {
+        String oldServerName = oldServer.getServerInfo().getName();
+        String newServerName = newServer.getServerInfo().getName();
 
         UUID historyId = UUID.randomUUID();
-        // Generates a random UUID for the history log id
+        String historyTitle = "switchTarget: " + newServerName;
 
-        String historyTitle = "switchTarget: " + serverName;
-        // String builder to build the title for the History
+        repository.createEvent(
+                playerUuid,
+                "switchTarget",
+                historyTitle,
+                oldServerName,
+                historyId.toString()
+        );
 
-        repository.createEvent(playerUuid, "switchTarget", historyTitle, serverName, historyId.toString());
-        // Creates a new Event for the Database
-
-        messenger.requestSnapshot(playerUuid, historyId.toString(), "switchTarget");
-        // Calls the messenger to send a message to the server where the player is located
+        messenger.requestSnapshot(
+                playerUuid,
+                historyId.toString(),
+                "switchTarget"
+        );
     }
 
 

@@ -203,7 +203,7 @@ public class Goliath {
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("banhistory").aliases("goliath:banhistory").plugin(this).build(),
-                new BanHistoryCommand(playerRepository)
+                new BanHistoryCommand(playerRepository, proxy)
         );
     }
 

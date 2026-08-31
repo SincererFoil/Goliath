@@ -8,6 +8,7 @@ import ch.mcserver.goliath.player.ProxyPlayerObject;
 import ch.mcserver.goliath.player.alts.GeoLocation;
 import ch.mcserver.goliath.player.alts.LinkedAccount;
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -156,9 +157,7 @@ public class AltsCommand implements SimpleCommand {
         if (args.length <= 1) {
             String input = args.length == 0 ? "" : args[0].toLowerCase();
 
-            return playerRepository.getAllUsernames().stream()
-                    .filter(name -> name.toLowerCase().startsWith(input))
-                    .toList();
+            return proxy.getAllPlayers().stream().map(Player::getUsername).filter(name -> name.toLowerCase().startsWith(input)).toList();
         }
 
         return List.of();

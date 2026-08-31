@@ -6,6 +6,7 @@ import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,26 +32,39 @@ public class HistoryEventListener {
     @Subscribe
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
+        RegisteredServer newServer = event.getServer();
         Optional<RegisteredServer> previousServer = event.getPreviousServer();
 
         if (previousServer.isEmpty()) {
             proxy.getScheduler()
-                    .buildTask(plugin, () -> logTypes.JoinHistory(player.getUniqueId(), event.getServer()))
+                    .buildTask(plugin, () -> logTypes.JoinHistory(player.getUniqueId(), newServer))
                     .delay(1, TimeUnit.SECONDS)
                     .schedule();
-        } else {
-            proxy.getScheduler()
-                    .buildTask(plugin, () -> logTypes.switchTarget(player.getUniqueId(), event.getServer()))
-                    .delay(1, TimeUnit.SECONDS)
-                    .schedule();
+            return;
         }
+
+        RegisteredServer oldServer = previousServer.get();
+
+        proxy.getScheduler()
+                .buildTask(plugin, () -> logTypes.switchTarget(
+                        player.getUniqueId(),
+                        oldServer,
+                        newServer
+                ))
+                .delay(1, TimeUnit.SECONDS)
+                .schedule();
     }
 
     @Subscribe
-    public void onPlayer(KickedFromServerEvent event) {
+    public void onPlayerKick(KickedFromServerEvent event) {
         Player player = event.getPlayer();
         RegisteredServer server = event.getServer();
-        String reason = "Server Kick";
+
+        String reason = event.getServerKickReason()
+                .map(component -> PlainTextComponentSerializer.plainText().serialize(component))
+                .filter(text -> !text.isBlank())
+                .orElse("Unknown reason");
+
         logTypes.kickHistory(player.getUniqueId(), server, reason);
     }
 }

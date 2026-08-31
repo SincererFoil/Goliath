@@ -4,6 +4,8 @@ import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
 import ch.mcserver.goliath.player.punishments.PlayerPunishment;
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -19,9 +21,11 @@ public class BanHistoryCommand implements SimpleCommand {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     private final PlayerRepository playerRepository;
+    private final ProxyServer proxy;
 
-    public BanHistoryCommand(PlayerRepository playerRepository) {
+    public BanHistoryCommand(PlayerRepository playerRepository, ProxyServer proxy) {
         this.playerRepository = playerRepository;
+        this.proxy = proxy;
     }
 
     @Override
@@ -149,9 +153,8 @@ public class BanHistoryCommand implements SimpleCommand {
         if (args.length <= 1) {
             String input = args.length == 0 ? "" : args[0].toLowerCase();
 
-            return playerRepository.getAllPunishedUsernames().stream()
-                    .filter(name -> name.toLowerCase().startsWith(input))
-                    .toList();
+            return proxy.getAllPlayers().stream().map(Player::getUsername).filter(name -> name.toLowerCase().startsWith(input)).toList();
+
         }
 
         return List.of();
