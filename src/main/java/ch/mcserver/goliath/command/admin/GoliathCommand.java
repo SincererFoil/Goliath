@@ -19,9 +19,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public class GoliathCommand implements SimpleCommand {
+
     public static HashMap<UUID, Float> playerFlySpeed = new HashMap<>();
     private final ProxyServer proxy;
     private final Object plugin;
+    public static boolean maintenance = false;
+
     public GoliathCommand(ProxyServer proxy, Object plugin) {
         this.proxy = proxy;
         this.plugin = plugin;
@@ -48,6 +51,9 @@ public class GoliathCommand implements SimpleCommand {
             case "update":
                 goliathUpdate(invocation);
                 break;
+            case "maintenance":
+
+                break;
             default:
                 return;
         }
@@ -55,6 +61,35 @@ public class GoliathCommand implements SimpleCommand {
 
 
     }
+
+
+    private void maintenance(Invocation invocation, String[] args) {
+        if (args.length >= 2) {
+            invocation.source().sendMessage(Component.text("Usage: /goliath maintenance", NamedTextColor.RED));
+            return;
+        }
+
+        if (maintenance) {
+            maintenance = false;
+
+        } else {
+            maintenance = true;
+
+            for (Player player : proxy.getAllPlayers()) {
+                if (!player.hasPermission("goliath.maintenance.bypass")) {
+                    Component message = Component.text("We are under maintenance.", NamedTextColor.RED)
+                            .appendNewline()
+                            .append(Component.text("For more information check the updates channel.", NamedTextColor.WHITE))
+                            .appendNewline()
+                            .append(Component.text("Join our Discord: ", NamedTextColor.GRAY))
+                            .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
+                    player.disconnect(message);
+                }
+            }
+        }
+    }
+
+
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
 
     private void goliathMove(Invocation invocation) {

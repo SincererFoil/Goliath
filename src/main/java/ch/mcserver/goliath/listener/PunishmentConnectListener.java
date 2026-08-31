@@ -4,8 +4,11 @@ import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
 import ch.mcserver.goliath.player.punishments.PlayerPunishment;
+import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
+import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -13,6 +16,8 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+
+import static ch.mcserver.goliath.command.admin.GoliathCommand.maintenance;
 
 public class PunishmentConnectListener {
 
@@ -95,6 +100,22 @@ public class PunishmentConnectListener {
                             .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
             ));
             return;
+        }
+    }
+
+    @Subscribe
+    public void onLogin(LoginEvent event) {
+        Player player = event.getPlayer();
+
+        if (maintenance && !player.hasPermission("goliath.maintenance.bypass")) {
+            Component message = Component.text("We are under maintenance.", NamedTextColor.RED)
+                    .appendNewline()
+                    .append(Component.text("For more information check the updates channel.", NamedTextColor.WHITE))
+                    .appendNewline()
+                    .append(Component.text("Join our Discord: ", NamedTextColor.GRAY))
+                    .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
+
+            event.setResult(ResultedEvent.ComponentResult.denied(message));
         }
     }
 }

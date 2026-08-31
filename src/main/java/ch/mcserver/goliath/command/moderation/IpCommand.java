@@ -1,4 +1,4 @@
-package ch.mcserver.goliath.command.admin;
+package ch.mcserver.goliath.command.moderation;
 
 import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerIpRepository;

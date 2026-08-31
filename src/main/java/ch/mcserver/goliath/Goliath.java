@@ -2,7 +2,7 @@ package ch.mcserver.goliath;
 
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
-import ch.mcserver.goliath.command.admin.IpCommand;
+import ch.mcserver.goliath.command.moderation.IpCommand;
 import ch.mcserver.goliath.command.moderation.*;
 import ch.mcserver.goliath.command.staff.GmspCommand;
 import ch.mcserver.goliath.command.staff.SfModeCommand;
