@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 public class PunishmentConnectListener {
 
     private static final ZoneId ZONE = ZoneId.of("Europe/Zurich");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     @Subscribe
     public void onPreLogin(PreLoginEvent event) {
@@ -37,9 +37,18 @@ public class PunishmentConnectListener {
         ZonedDateTime now = ZonedDateTime.now(ZONE);
 
         for (PlayerPunishment punishment : targetObject.getPunishments()) {
+            if (!punishment.isActive()) {
+                continue;
+            }
+
+            String reason = punishment.getReason() == null
+                    ? "Unknown reason"
+                    : punishment.getReason();
+
             if (punishment.isPermanent()) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                        Component.text(punishment.getReason(), NamedTextColor.RED)
+                        Component.text(reason, NamedTextColor.RED)
+                                .appendNewline()
                                 .appendNewline()
                                 .append(Component.text("Date: ", NamedTextColor.GRAY))
                                 .append(Component.text(punishment.getCreatedAt().format(DATE_FORMATTER), NamedTextColor.WHITE))
@@ -49,18 +58,14 @@ public class PunishmentConnectListener {
                                 .append(Component.text(punishment.getBanId(), NamedTextColor.WHITE))
                                 .appendNewline()
                                 .appendNewline()
-                                .append(Component.text("You may be able to appeal to this ban on", NamedTextColor.GRAY))
+                                .append(Component.text("You may be able to appeal this ban on", NamedTextColor.GRAY))
                                 .appendNewline()
                                 .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
                 ));
                 return;
             }
 
-            if (punishment.getExpiresAt() == null) {
-                continue;
-            }
-
-            if (!punishment.getExpiresAt().isAfter(now)) {
+            if (punishment.getExpiresAt() == null || !punishment.getExpiresAt().isAfter(now)) {
                 continue;
             }
 
@@ -74,7 +79,7 @@ public class PunishmentConnectListener {
             String formatted = days + " Days " + hours + " Hours " + minutes + " Minutes";
 
             event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                    Component.text(punishment.getReason(), NamedTextColor.RED)
+                    Component.text(reason, NamedTextColor.RED)
                             .appendNewline()
                             .appendNewline()
                             .append(Component.text("Time Left: ", NamedTextColor.GRAY))

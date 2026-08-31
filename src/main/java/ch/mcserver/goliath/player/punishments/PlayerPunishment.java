@@ -16,8 +16,9 @@ public class PlayerPunishment {
     private String staffNote;
     private String banId;
     private boolean permanent;
+    private boolean active;
 
-    public PlayerPunishment(int offenseLevel, String reason, String ipAddress, String punishedBy, ZonedDateTime createdAt, ZonedDateTime expiresAt, boolean wiped, String staffNote, String banId, boolean permanent) {
+    public PlayerPunishment(int offenseLevel, String reason, String ipAddress, String punishedBy, ZonedDateTime createdAt, ZonedDateTime expiresAt, boolean wiped, String staffNote, String banId, boolean permanent, boolean active) {
         this.offenseLevel = offenseLevel;
         this.reason = reason;
         this.ipAddress = ipAddress;
@@ -28,6 +29,7 @@ public class PlayerPunishment {
         this.staffNote = staffNote;
         this.banId = banId;
         this.permanent = permanent;
+        this.active = active;
     }
 
     public int getOffenseLevel() {
@@ -73,6 +75,12 @@ public class PlayerPunishment {
     public boolean isPermanent() {
         return permanent;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+
     public void setPermanent(boolean permanent) {
         this.permanent = permanent;
     }
@@ -107,6 +115,10 @@ public class PlayerPunishment {
 
     public void setBanId(String banId) {
         this.banId = banId;
+    }
+
+    public void  setActive(boolean active) {
+        this.active = active;
     }
 }
 

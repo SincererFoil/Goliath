@@ -141,7 +141,8 @@ public class OffendCommand implements SimpleCommand {
                 isWiped,
                 staffNote,
                 BanIdGenerator.generateBanId(),
-                false
+                false,
+                true
         );
 
         targetObject.getPunishments().add(punishment);
@@ -248,7 +249,8 @@ public class OffendCommand implements SimpleCommand {
         put("irl-trade/boosting", 60L * 24 * 60 * 60 * 1000);
         put("irl-trading-ownership", 365L * 24 * 60 * 60 * 1000);
 
-        put("inappropriate-skin", 7L * 24 * 60 * 60 * 1000);
+        put("inappropriate-skin", 1L * 24 * 60 * 60 * 1000);
+        put("inappropriate-name", 1L * 24 * 60 * 60 * 1000);
         put("inappropriate-map-art", 7L * 24 * 60 * 60 * 1000);
         put("inappropriate-proximity", 7L * 24 * 60 * 60 * 1000);
         put("inappropriate-language", 3L * 24 * 60 * 60 * 1000);
@@ -303,9 +305,10 @@ public class OffendCommand implements SimpleCommand {
         put("lying-to-staff", "You are temporarily banned for lying to staff.");
 
         put("irl-trade/boosting", "You are temporarily banned for trading server items for real life goods or services.");
-        put("irl-trading-ownership", "You are temporarily banned for IRL trading ownership.");
+        put("irl-trading-ownership", "You are temporarily banned for trading server items for real life goods or services.");
 
-        put("inappropriate-skin", "You are temporarily banned for having an inappropriate skin.");
+        put("inappropriate-skin", "You are temporarily banned for having an inappropriate skin. Please change it before joining again.");
+        put("inappropriate-name", "You are temporarily banned for having an inappropriate name. Please change it before joining again.");
         put("inappropriate-map-art", "You are temporarily banned for having inappropriate map art.");
         put("inappropriate-proximity", "You are temporarily muted for inappropriate proximity chat.");
         put("inappropriate-language", "You are temporarily muted for inappropriate language.");

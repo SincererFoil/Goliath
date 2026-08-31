@@ -121,6 +121,7 @@ public class BanCommand implements SimpleCommand {
                 true,
                 note,
                 BanIdGenerator.generateBanId(),
+                true,
                 true
         );
 

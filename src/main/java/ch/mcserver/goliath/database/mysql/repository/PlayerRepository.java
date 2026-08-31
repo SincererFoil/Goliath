@@ -139,13 +139,13 @@ public class PlayerRepository {
         return null;
     }
 
-    private ArrayList<PlayerPunishment> loadPunishments(UUID uuid) {
+    public ArrayList<PlayerPunishment> loadPunishments(UUID uuid) {
 
         ArrayList<PlayerPunishment> punishments = new ArrayList<>();
 
         Connection connection = mySQLManager.getConnection();
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT * FROM player_punishments WHERE player_uuid = ?"
+                "SELECT * FROM player_punishments WHERE player_uuid = ? ORDER BY created_at DESC"
         )) {
 
             statement.setString(1, uuid.toString());
@@ -170,7 +170,8 @@ public class PlayerRepository {
                                     resultSet.getBoolean("wiped"),
                                     resultSet.getString("staff_note"),
                                     resultSet.getString("ban_id"),
-                                    resultSet.getBoolean("permanent")
+                                    resultSet.getBoolean("permanent"),
+                                    resultSet.getBoolean("active")
                             )
                     );
                 }
@@ -247,12 +248,6 @@ public class PlayerRepository {
 
             statement.executeUpdate();
 
-            try (PreparedStatement deletePunishments = connection.prepareStatement(
-                    "DELETE FROM player_punishments WHERE player_uuid = ?"
-            )) {
-                deletePunishments.setString(1, proxyPlayerObject.getUuid().toString());
-                deletePunishments.executeUpdate();
-            }
 
             for (PlayerPunishment punishment : proxyPlayerObject.getPunishments()) {
                 savePunishment(proxyPlayerObject.getUuid(), punishment);
@@ -265,41 +260,45 @@ public class PlayerRepository {
 
     public void savePunishment(UUID playerUuid, PlayerPunishment punishment) {
         Connection connection = mySQLManager.getConnection();
+
         try (PreparedStatement statement = connection.prepareStatement(
                 """
                 INSERT INTO player_punishments(
                     player_uuid, offense_level, reason, punished_by,
-                    created_at, expires_at, wiped, staff_note, ban_id, permanent
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    created_at, expires_at, wiped, staff_note,
+                    ban_id, permanent, active
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    offense_level = VALUES(offense_level),
+                    reason = VALUES(reason),
+                    punished_by = VALUES(punished_by),
+                    created_at = VALUES(created_at),
+                    expires_at = VALUES(expires_at),
+                    wiped = VALUES(wiped),
+                    staff_note = VALUES(staff_note),
+                    permanent = VALUES(permanent),
+                    active = VALUES(active)
                 """
         )) {
-
             statement.setString(1, playerUuid.toString());
             statement.setInt(2, punishment.getOffenseLevel());
             statement.setString(3, punishment.getReason());
             statement.setString(4, punishment.getPunishedBy());
-
-            statement.setTimestamp(
-                    5,
-                    Timestamp.valueOf(punishment.getCreatedAt().toLocalDateTime())
-            );
+            statement.setTimestamp(5, Timestamp.valueOf(punishment.getCreatedAt().toLocalDateTime()));
 
             if (punishment.getExpiresAt() == null) {
                 statement.setTimestamp(6, null);
             } else {
-                statement.setTimestamp(
-                        6,
-                        Timestamp.valueOf(punishment.getExpiresAt().toLocalDateTime())
-                );
+                statement.setTimestamp(6, Timestamp.valueOf(punishment.getExpiresAt().toLocalDateTime()));
             }
 
             statement.setBoolean(7, punishment.isWiped());
             statement.setString(8, punishment.getStaffNote());
             statement.setString(9, punishment.getBanId());
             statement.setBoolean(10, punishment.isPermanent());
+            statement.setBoolean(11, punishment.isActive());
 
             statement.executeUpdate();
-
         } catch (SQLException exception) {
             exception.printStackTrace();
         }

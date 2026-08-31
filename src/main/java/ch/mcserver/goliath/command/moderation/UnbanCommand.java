@@ -3,81 +3,84 @@ package ch.mcserver.goliath.command.moderation;
 import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
-import com.github.benmanes.caffeine.cache.stats.CacheStats;
+import ch.mcserver.goliath.player.punishments.PlayerPunishment;
 import com.velocitypowered.api.command.SimpleCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class UnbanCommand implements SimpleCommand {
 
+    private static final ZoneId ZONE = ZoneId.of("Europe/Zurich");
+
     @Override
     public void execute(Invocation invocation) {
-
         String[] args = invocation.arguments();
 
         if (args.length != 1) {
-            invocation.source().sendMessage(
-                    Component.text("Player not found!", NamedTextColor.RED)
-            );
+            invocation.source().sendMessage(Component.text(
+                    "Wrong Usage: /unban <player>",
+                    NamedTextColor.RED
+            ));
             return;
         }
 
-        String targetRawName = args[0];
-
+        String targetName = args[0];
         PlayerRepository playerRepository = Goliath.playerRepository;
 
-        if (!playerRepository.existsByUsername(targetRawName)) {
-            invocation.source().sendMessage(
-                    Component.text("Player not found!", NamedTextColor.RED)
-            );
+        if (!playerRepository.existsByUsername(targetName)) {
+            invocation.source().sendMessage(Component.text(
+                    "Player not found!",
+                    NamedTextColor.RED
+            ));
             return;
         }
 
-        ProxyPlayerObject playerObject =
-                playerRepository.loadPlayerByUsername(targetRawName);
+        ProxyPlayerObject playerObject = playerRepository.loadPlayerByUsername(targetName);
 
-        if (playerObject.getPunishments() == null) {
-            invocation.source().sendMessage(
-                    Component.text("Player is not banned!", NamedTextColor.RED)
-            );
+        if (playerObject == null || playerObject.getPunishments() == null) {
+            invocation.source().sendMessage(Component.text(
+                    "Player is not banned!",
+                    NamedTextColor.RED
+            ));
             return;
         }
 
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+        ZonedDateTime now = ZonedDateTime.now(ZONE);
+        boolean foundActiveBan = false;
 
-        boolean removed = playerObject.getPunishments().removeIf(
-                punishment ->
-                        punishment.isPermanent()
-                                || (
-                                punishment.getExpiresAt() != null
-                                        && punishment.getExpiresAt().isAfter(now)
-                        )
-        );
+        for (PlayerPunishment punishment : playerObject.getPunishments()) {
+            if (!punishment.isActive()) {
+                continue;
+            }
 
-        if (!removed) {
-            invocation.source().sendMessage(
-                    Component.text("Player is not banned!", NamedTextColor.RED)
-            );
+            boolean permanentBan = punishment.isPermanent();
+            boolean temporaryBan = punishment.getExpiresAt() != null
+                    && punishment.getExpiresAt().isAfter(now);
+
+            if (permanentBan || temporaryBan) {
+                punishment.setActive(false);
+                foundActiveBan = true;
+            }
+        }
+
+        if (!foundActiveBan) {
+            invocation.source().sendMessage(Component.text(
+                    "Player is not banned!",
+                    NamedTextColor.RED
+            ));
             return;
         }
 
         playerRepository.save(playerObject);
 
         invocation.source().sendMessage(
-                Component.text(
-                        "Unbanned player ", NamedTextColor.RED
-                ).append(Component.text(playerObject.getName(), NamedTextColor.WHITE))
+                Component.text("Unbanned player ", NamedTextColor.GREEN)
+                        .append(Component.text(playerObject.getName(), NamedTextColor.WHITE))
         );
     }
-
-
 
     @Override
     public boolean hasPermission(Invocation invocation) {

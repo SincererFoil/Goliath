@@ -8,6 +8,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
@@ -111,51 +112,53 @@ public class GoliathCommand implements SimpleCommand {
         if (args.length < 2) {
             Component message = Component.text("We are under maintenance.", NamedTextColor.RED)
                     .appendNewline()
-                    .append(Component.text("For more information check updates channel.", NamedTextColor.WHITE))
+                    .append(Component.text("For more information check the updates channel.", NamedTextColor.WHITE))
                     .appendNewline()
-                    .append(Component.text("Join us in discord: ", NamedTextColor.GRAY))
+                    .append(Component.text("Join our Discord: ", NamedTextColor.GRAY))
                     .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
 
             for (Player player : proxy.getAllPlayers()) {
                 player.disconnect(message);
             }
+
             try {
                 new ProcessBuilder(
+                        "setsid",
                         "/bin/bash",
                         "/data/DonutSMP/deploy.sh"
-                ).inheritIO().start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                ).redirectOutput(new File("/data/DonutSMP/deploy.log"))
+                        .redirectErrorStream(true)
+                        .start();
 
+                invocation.source().sendMessage(Component.text("Deploying network...", NamedTextColor.GREEN));
+            } catch (IOException exception) {
+                exception.printStackTrace();
+                invocation.source().sendMessage(Component.text("Failed to start deployment.", NamedTextColor.RED));
+            }
 
             return;
         }
 
         String serverName = args[1];
 
-        Optional<RegisteredServer> server = proxy.getServer(serverName);
-
+        if (proxy.getServer(serverName).isEmpty()) {
+            invocation.source().sendMessage(Component.text("Server not found.", NamedTextColor.RED));
+            return;
+        }
 
         try {
             new ProcessBuilder(
                     "/bin/bash",
                     "/data/DonutSMP/update_server.sh",
                     serverName
-            ).start();
+            ).redirectOutput(new File("/data/DonutSMP/update-server.log"))
+                    .redirectErrorStream(true)
+                    .start();
 
-            invocation.source().sendMessage(Component.text(
-                    "Updating " + serverName + "...",
-                    NamedTextColor.GREEN
-            ));
-
+            invocation.source().sendMessage(Component.text("Updating " + serverName + "...", NamedTextColor.GREEN));
         } catch (IOException exception) {
             exception.printStackTrace();
-
-            invocation.source().sendMessage(Component.text(
-                    "Failed to update " + serverName + ".",
-                    NamedTextColor.RED
-            ));
+            invocation.source().sendMessage(Component.text("Failed to update " + serverName + ".", NamedTextColor.RED));
         }
     }
 
