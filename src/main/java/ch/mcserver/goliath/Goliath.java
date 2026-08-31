@@ -2,6 +2,7 @@ package ch.mcserver.goliath;
 
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
+import ch.mcserver.goliath.command.admin.IpCommand;
 import ch.mcserver.goliath.command.moderation.*;
 import ch.mcserver.goliath.command.staff.GmspCommand;
 import ch.mcserver.goliath.command.staff.SfModeCommand;
@@ -204,6 +205,11 @@ public class Goliath {
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("banhistory").aliases("goliath:banhistory").plugin(this).build(),
                 new BanHistoryCommand(playerRepository, proxy)
+        );
+
+        proxy.getCommandManager().register(
+                proxy.getCommandManager().metaBuilder("ip").aliases("goliath:ip").plugin(this).build(),
+                new IpCommand(proxy)
         );
     }
 
