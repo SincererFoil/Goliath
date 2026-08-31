@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class GoliathCommand implements SimpleCommand {
     public static HashMap<UUID, Float> playerFlySpeed = new HashMap<>();
@@ -145,11 +146,6 @@ public class GoliathCommand implements SimpleCommand {
             return;
         }
 
-        if (proxy.getServer(serverName).isEmpty()) {
-            invocation.source().sendMessage(Component.text("Server not found.", NamedTextColor.RED));
-            return;
-        }
-
         try {
             new ProcessBuilder(
                     "/bin/bash",
@@ -179,12 +175,22 @@ public class GoliathCommand implements SimpleCommand {
     public List<String> suggest(Invocation invocation) {
         String[] args = invocation.arguments();
 
-        if (args.length == 2 && (args[0].equalsIgnoreCase("move") || args[0].equalsIgnoreCase("update"))) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("update")) {
+            String input = args[1].toLowerCase();
+
+            return Stream.concat(Stream.of("all"), proxy.getAllServers().stream()
+                                    .map(server -> server.getServerInfo().getName())
+                    ).filter(serverName -> serverName.toLowerCase().startsWith(input.toLowerCase()))
+                    .distinct()
+                    .sorted()
+                    .toList();
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("move")) {
             String input = args[1].toLowerCase();
 
             return proxy.getAllServers().stream()
-                    .map(registeredServer -> registeredServer.getServerInfo().getName())
-                    .filter(serverName -> serverName.toLowerCase().startsWith(input))
+                            .map(server -> server.getServerInfo().getName())
+                    .filter(serverName -> serverName.toLowerCase().startsWith(input.toLowerCase()))
+                    .distinct()
                     .sorted()
                     .toList();
         }
