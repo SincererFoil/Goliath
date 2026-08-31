@@ -110,6 +110,12 @@ public class GoliathCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length < 2) {
+            invocation.source().sendMessage(Component.text("Wrong usage: /goliath update <servername/all>", NamedTextColor.RED));
+        }
+
+        String serverName = args[1];
+
+        if (args[1].equals("all")) {
             Component message = Component.text("We are under maintenance.", NamedTextColor.RED)
                     .appendNewline()
                     .append(Component.text("For more information check the updates channel.", NamedTextColor.WHITE))
@@ -138,8 +144,6 @@ public class GoliathCommand implements SimpleCommand {
 
             return;
         }
-
-        String serverName = args[1];
 
         if (proxy.getServer(serverName).isEmpty()) {
             invocation.source().sendMessage(Component.text("Server not found.", NamedTextColor.RED));
