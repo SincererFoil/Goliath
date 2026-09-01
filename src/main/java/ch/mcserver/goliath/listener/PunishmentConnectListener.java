@@ -4,25 +4,22 @@ import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
 import ch.mcserver.goliath.player.ProxyPlayerObject;
 import ch.mcserver.goliath.player.punishments.PlayerPunishment;
-import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
-import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static ch.mcserver.goliath.command.admin.GoliathCommand.maintenance;
-
 public class PunishmentConnectListener {
 
     private static final ZoneId ZONE = ZoneId.of("Europe/Zurich");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     @Subscribe
     public void onPreLogin(PreLoginEvent event) {
@@ -33,7 +30,8 @@ public class PunishmentConnectListener {
             return;
         }
 
-        ProxyPlayerObject targetObject = playerRepository.loadPlayerByUsername(username);
+        ProxyPlayerObject targetObject =
+                playerRepository.loadPlayerByUsername(username);
 
         if (targetObject == null || targetObject.getPunishments() == null) {
             return;
@@ -51,8 +49,12 @@ public class PunishmentConnectListener {
                     : punishment.getReason();
 
             if (punishment.isPermanent()) {
+                Component reasonComponent = reason.contains("&")
+                        ? LegacyComponentSerializer.legacyAmpersand().deserialize(reason)
+                        : Component.text(reason, NamedTextColor.RED);
+
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                        Component.text(reason, NamedTextColor.RED)
+                        reasonComponent
                                 .appendNewline()
                                 .appendNewline()
                                 .append(Component.text("Date: ", NamedTextColor.GRAY))
@@ -67,24 +69,32 @@ public class PunishmentConnectListener {
                                 .appendNewline()
                                 .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
                 ));
+
                 return;
             }
 
-            if (punishment.getExpiresAt() == null || !punishment.getExpiresAt().isAfter(now)) {
+            if (punishment.getExpiresAt() == null
+                    || !punishment.getExpiresAt().isAfter(now)) {
                 continue;
             }
 
-            Duration remaining = Duration.between(now, punishment.getExpiresAt());
+            Duration remaining =
+                    Duration.between(now, punishment.getExpiresAt());
 
             long totalMinutes = Math.max(0, remaining.toMinutes());
             long days = totalMinutes / (24 * 60);
             long hours = (totalMinutes % (24 * 60)) / 60;
             long minutes = totalMinutes % 60;
 
-            String formatted = days + " Days " + hours + " Hours " + minutes + " Minutes";
+            String formatted =
+                    days + " Days " + hours + " Hours " + minutes + " Minutes";
+
+            Component reasonComponent = reason.contains("&")
+                    ? LegacyComponentSerializer.legacyAmpersand().deserialize(reason)
+                    : Component.text(reason, NamedTextColor.RED);
 
             event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
-                    Component.text(reason, NamedTextColor.RED)
+                    reasonComponent
                             .appendNewline()
                             .appendNewline()
                             .append(Component.text("Time Left: ", NamedTextColor.GRAY))
@@ -99,23 +109,8 @@ public class PunishmentConnectListener {
                             .appendNewline()
                             .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
             ));
+
             return;
-        }
-    }
-
-    @Subscribe
-    public void onLogin(LoginEvent event) {
-        Player player = event.getPlayer();
-
-        if (maintenance && !player.hasPermission("goliath.maintenance.bypass")) {
-            Component message = Component.text("We are under maintenance.", NamedTextColor.RED)
-                    .appendNewline()
-                    .append(Component.text("For more information check the updates channel.", NamedTextColor.WHITE))
-                    .appendNewline()
-                    .append(Component.text("Join our Discord: ", NamedTextColor.GRAY))
-                    .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
-
-            event.setResult(ResultedEvent.ComponentResult.denied(message));
         }
     }
 }

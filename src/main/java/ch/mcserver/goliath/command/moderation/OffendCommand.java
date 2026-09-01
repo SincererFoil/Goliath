@@ -9,19 +9,21 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class OffendCommand implements SimpleCommand {
 
     private final ProxyServer proxy;
+
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public OffendCommand(ProxyServer proxy) {
         this.proxy = proxy;
@@ -40,16 +42,29 @@ public class OffendCommand implements SimpleCommand {
         String[] args = invocation.arguments();
         String staffName = checkOffendSource(invocation);
 
-        if (args.length < 2 || args.length > 3) {
+        if (args.length < 2) {
             invocation.source().sendMessage(Component.text(
-                    "Wrong Usage: /offend <player> <reason> [staff-note]",
+                    "Wrong Usage: /offend <player> <reason> [note: <staff-note>]",
                     NamedTextColor.RED
             ));
             return;
         }
 
         String targetName = args[0];
-        String staffNote = args.length == 3 ? args[2] : null;
+        String staffNote = null;
+
+        if (args.length >= 3) {
+            String noteInput = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+            int noteIndex = noteInput.toLowerCase().indexOf("note:");
+
+            if (noteIndex >= 0) {
+                staffNote = noteInput.substring(noteIndex + "note:".length()).trim();
+
+                if (staffNote.isEmpty()) {
+                    staffNote = null;
+                }
+            }
+        }
 
         PlayerRepository playerRepository = Goliath.playerRepository;
 
@@ -67,7 +82,6 @@ public class OffendCommand implements SimpleCommand {
             targetObject.setPunishments(new ArrayList<>());
         }
 
-        int targetOffendCount = targetObject.getPunishments().size() + 1;
         String rawReason = args[1].toLowerCase();
 
         if (!durations.containsKey(rawReason)) {
@@ -80,6 +94,7 @@ public class OffendCommand implements SimpleCommand {
 
         long banRawTime = durations.get(rawReason);
         boolean isWiped = wipes.getOrDefault(rawReason, false);
+        boolean isPermanent = Set.of("autopunish", "make-a-ticket").contains(rawReason);
         String banText = punishmentText.get(rawReason);
 
         if (banText == null) {
@@ -89,6 +104,10 @@ public class OffendCommand implements SimpleCommand {
             ));
             return;
         }
+
+        int targetOffendCount = (int) targetObject.getPunishments().stream()
+                .filter(punishment -> banText.equals(punishment.getReason()))
+                .count() + 1;
 
         long banTime = banRawTime * targetOffendCount;
 
@@ -100,7 +119,8 @@ public class OffendCommand implements SimpleCommand {
                 targetObject,
                 staffName,
                 isWiped,
-                staffNote
+                staffNote,
+                isPermanent
         );
     }
 
@@ -112,7 +132,8 @@ public class OffendCommand implements SimpleCommand {
             ProxyPlayerObject targetObject,
             String staffName,
             boolean isWiped,
-            String staffNote
+            String staffNote,
+            boolean isPermanent
     ) {
         String durationText;
 
@@ -129,7 +150,7 @@ public class OffendCommand implements SimpleCommand {
                 .orElse(null);
 
         ZonedDateTime createdAt = ZonedDateTime.now(ZoneId.of("Europe/Zurich"));
-        ZonedDateTime expiresAt = createdAt.plusSeconds(banTime / 1000);
+        ZonedDateTime expiresAt = isPermanent ? null : createdAt.plusSeconds(banTime / 1000);
 
         PlayerPunishment punishment = new PlayerPunishment(
                 offendCount,
@@ -141,7 +162,7 @@ public class OffendCommand implements SimpleCommand {
                 isWiped,
                 staffNote,
                 BanIdGenerator.generateBanId(),
-                false,
+                isPermanent,
                 true
         );
 
@@ -153,21 +174,61 @@ public class OffendCommand implements SimpleCommand {
                 NamedTextColor.RED
         ));
 
-        invocation.source().sendMessage(
-                Component.text("Temporarily banned player ", NamedTextColor.RED)
-                        .append(Component.text(targetObject.getName(), NamedTextColor.WHITE))
-                        .append(Component.text(" for ", NamedTextColor.RED))
-                        .append(Component.text(durationText, NamedTextColor.WHITE))
-                        .append(Component.text(" with reason:", NamedTextColor.RED))
-        );
+        if (isPermanent) {
+            invocation.source().sendMessage(
+                    Component.text("Permanently banned player ", NamedTextColor.RED)
+                            .append(Component.text(targetObject.getName(), NamedTextColor.WHITE))
+                            .append(Component.text(" with reason:", NamedTextColor.RED))
+            );
+        } else {
+            invocation.source().sendMessage(
+                    Component.text("Temporarily banned player ", NamedTextColor.RED)
+                            .append(Component.text(targetObject.getName(), NamedTextColor.WHITE))
+                            .append(Component.text(" for ", NamedTextColor.RED))
+                            .append(Component.text(durationText, NamedTextColor.WHITE))
+                            .append(Component.text(" with reason:", NamedTextColor.RED))
+            );
+        }
 
-        invocation.source().sendMessage(Component.text(banText, NamedTextColor.WHITE));
+        Component chatBanText = banText.contains("&")
+                ? LegacyComponentSerializer.legacyAmpersand().deserialize(banText)
+                : Component.text(banText, NamedTextColor.WHITE);
+
+        invocation.source().sendMessage(chatBanText);
 
         Optional<Player> targetPlayer = proxy.getPlayer(targetObject.getUuid());
 
         if (targetPlayer.isPresent()) {
             Player target = targetPlayer.get();
-            Duration remaining = Duration.between(ZonedDateTime.now(ZoneId.of("Europe/Zurich")), expiresAt);
+
+            Component banMessage = banText.contains("&")
+                    ? LegacyComponentSerializer.legacyAmpersand().deserialize(banText)
+                    : Component.text(banText, NamedTextColor.RED);
+
+            if (isPermanent) {
+                target.disconnect(
+                        banMessage
+                                .appendNewline()
+                                .appendNewline()
+                                .append(Component.text("Date: ", NamedTextColor.GRAY))
+                                .append(Component.text(createdAt.format(DATE_FORMATTER), NamedTextColor.WHITE))
+                                .appendNewline()
+                                .appendNewline()
+                                .append(Component.text("Ban ID: ", NamedTextColor.GRAY))
+                                .append(Component.text(punishment.getBanId(), NamedTextColor.WHITE))
+                                .appendNewline()
+                                .appendNewline()
+                                .append(Component.text("You may be able to appeal this ban on", NamedTextColor.GRAY))
+                                .appendNewline()
+                                .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
+                );
+                return;
+            }
+
+            Duration remaining = Duration.between(
+                    ZonedDateTime.now(ZoneId.of("Europe/Zurich")),
+                    expiresAt
+            );
 
             long totalMinutes = Math.max(0, remaining.toMinutes());
             long days = totalMinutes / (24 * 60);
@@ -177,7 +238,7 @@ public class OffendCommand implements SimpleCommand {
             String formatted = days + " Days " + hours + " Hours " + minutes + " Minutes";
 
             target.disconnect(
-                    Component.text(banText, NamedTextColor.RED)
+                    banMessage
                             .appendNewline()
                             .appendNewline()
                             .append(Component.text("Time Left: ", NamedTextColor.GRAY))
@@ -209,9 +270,9 @@ public class OffendCommand implements SimpleCommand {
         put("ban-evading", 30L * 24 * 60 * 60 * 1000);
         put("bug-abuse", 14L * 24 * 60 * 60 * 1000);
         put("cross-trading", 30L * 24 * 60 * 60 * 1000);
-        put("cheating", 30L * 24 * 60 * 60 * 1000);
+        put("cheating", 14L * 24 * 60 * 60 * 1000);
         put("doxing", 365L * 24 * 60 * 60 * 1000);
-        put("duping", 30L * 24 * 60 * 60 * 1000);
+        put("duping", 365L * 24 * 60 * 60 * 1000);
 
         put("external-gambling", 60L * 24 * 60 * 60 * 1000);
         put("flooding-chat", 1L * 24 * 60 * 60 * 1000);
@@ -221,7 +282,8 @@ public class OffendCommand implements SimpleCommand {
         put("make-a-ticket", 30L * 24 * 60 * 60 * 1000);
 
         put("mute-evasion", 14L * 24 * 60 * 60 * 1000);
-        put("macro-scripts", 30L * 24 * 60 * 60 * 1000);
+        put("macro-scripts", 7L * 24 * 60 * 60 * 1000);
+        put("macros", 7L * 24 * 60 * 60 * 1000);
 
         put("invite-rewards", 14L * 24 * 60 * 60 * 1000);
         put("invite-rewards-ownership", 30L * 24 * 60 * 60 * 1000);
@@ -249,7 +311,7 @@ public class OffendCommand implements SimpleCommand {
         put("irl-trade/boosting", 60L * 24 * 60 * 60 * 1000);
         put("irl-trading-ownership", 365L * 24 * 60 * 60 * 1000);
 
-        put("inappropriate-skin", 1L * 24 * 60 * 60 * 1000);
+        put("inappropriate-skin", 12L * 60 * 60 * 1000);
         put("inappropriate-name", 1L * 24 * 60 * 60 * 1000);
         put("inappropriate-map-art", 7L * 24 * 60 * 60 * 1000);
         put("inappropriate-proximity", 7L * 24 * 60 * 60 * 1000);
@@ -264,22 +326,24 @@ public class OffendCommand implements SimpleCommand {
     }};
 
     public static final HashMap<String, String> punishmentText = new HashMap<>() {{
+        put("autopunish", "&f&l Your account has been placed on hold.\n &7 We need to chat with you about something \n \n &7 Please open a ticket in the Donut SMP Discord \n &7 abd we'll get you back as soon as possible!");
         put("ban-evading", "You are temporarily banned for joining on another account while being banned.");
         put("bug-abuse", "You are temporarily banned for abusing a bug/issue.");
         put("cross-trading", "You are temporarily banned for cross trading.");
         put("cheating", "You are temporarily banned for cheating.");
         put("doxing", "You are temporarily banned for doxing.");
-        put("duping", "You are temporarily banned for duping.");
+        put("duping", "You are temporarily banned for duplicating items.");
 
         put("external-gambling", "You are temporarily banned for external gambling.");
         put("flooding-chat", "You are temporarily muted for flooding chat.");
         put("gambling-ownership", "You are temporarily banned for gambling ownership.");
 
         put("hacking", "You are temporarily banned for hacking.");
-        put("make-a-ticket", "You are temporarily banned for make a ticket.");
+        put("make-a-ticket", "&f&l Your account has been placed on hold.\n &7 We need to chat with you about something \n \n &7 Please open a ticket in the Donut SMP Discord \n &7 abd we'll get you back as soon as possible!");
 
         put("mute-evasion", "You are temporarily banned for mute evasion.");
         put("macro-scripts", "You are temporarily banned for using macros or scripts.");
+        put("macros", "You are temporarily banned for using macros or scripts.");
 
         put("invite-rewards", "You are temporarily banned for invite rewards abuse.");
         put("invite-rewards-ownership", "You are temporarily banned for invite rewards ownership.");
@@ -299,7 +363,7 @@ public class OffendCommand implements SimpleCommand {
         put("xray/esp/baritone", "You are temporarily banned for the use of X-Ray, ESP or baritone.");
 
         put("racism-in-chat-sign", "You are temporarily banned for racism.");
-        put("proximity-racism", "You are temporarily banned for racism.");
+        put("proximity-racism", "You are temporarily banned for racial slurs in voice chat.");
         put("proximity-toxicity/hate/harassment", "You are temporarily muted for toxicity, hate speech or harassment.");
 
         put("lying-to-staff", "You are temporarily banned for lying to staff.");
@@ -340,6 +404,7 @@ public class OffendCommand implements SimpleCommand {
 
         put("mute-evasion", false);
         put("macro-scripts", true);
+        put("macros", true);
 
         put("invite-rewards", false);
         put("invite-rewards-ownership", true);
@@ -368,6 +433,7 @@ public class OffendCommand implements SimpleCommand {
         put("irl-trading-ownership", true);
 
         put("inappropriate-skin", false);
+        put("inappropriate-name", false);
         put("inappropriate-map-art", false);
         put("inappropriate-proximity", false);
         put("inappropriate-language", false);

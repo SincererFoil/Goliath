@@ -7,6 +7,7 @@ import ch.mcserver.goliath.player.punishments.PlayerPunishment;
 import com.velocitypowered.api.command.SimpleCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -87,15 +88,27 @@ public class CheckBanCommand implements SimpleCommand {
                 ? "Console"
                 : activePunishment.getPunishedBy();
 
+        String staffNote = activePunishment.getStaffNote();
+
+        Component reasonComponent = reason.contains("&")
+                ? LegacyComponentSerializer.legacyAmpersand().deserialize(reason)
+                : Component.text(reason, NamedTextColor.WHITE);
+
         if (activePunishment.isPermanent()) {
-            invocation.source().sendMessage(
-                    Component.text(playerObject.getName(), NamedTextColor.WHITE)
-                            .append(Component.text(" is currently permanently banned. ", NamedTextColor.RED))
-                            .append(Component.text("This user was banned by ", NamedTextColor.RED))
-                            .append(Component.text(staffName, NamedTextColor.WHITE))
-                            .append(Component.text(" for: ", NamedTextColor.RED))
-                            .append(Component.text(reason, NamedTextColor.WHITE))
-            );
+            Component message = Component.text(playerObject.getName(), NamedTextColor.WHITE)
+                    .append(Component.text(" is currently permanently banned. ", NamedTextColor.RED))
+                    .append(Component.text("This user was banned by ", NamedTextColor.RED))
+                    .append(Component.text(staffName, NamedTextColor.WHITE))
+                    .append(Component.text(" for: ", NamedTextColor.RED))
+                    .append(reasonComponent);
+
+            if (staffNote != null && !staffNote.isBlank()) {
+                message = message
+                        .append(Component.text(" Note: ", NamedTextColor.RED))
+                        .append(Component.text(staffNote, NamedTextColor.WHITE));
+            }
+
+            invocation.source().sendMessage(message);
             return;
         }
 
@@ -103,15 +116,21 @@ public class CheckBanCommand implements SimpleCommand {
                 Duration.between(now, activePunishment.getExpiresAt())
         );
 
-        invocation.source().sendMessage(
-                Component.text(playerObject.getName(), NamedTextColor.WHITE)
-                        .append(Component.text(" is currently banned for another ", NamedTextColor.RED))
-                        .append(Component.text(duration, NamedTextColor.WHITE))
-                        .append(Component.text(". This user was banned by ", NamedTextColor.RED))
-                        .append(Component.text(staffName, NamedTextColor.WHITE))
-                        .append(Component.text(" for: ", NamedTextColor.RED))
-                        .append(Component.text(reason, NamedTextColor.WHITE))
-        );
+        Component message = Component.text(playerObject.getName(), NamedTextColor.WHITE)
+                .append(Component.text(" is currently banned for another ", NamedTextColor.RED))
+                .append(Component.text(duration, NamedTextColor.WHITE))
+                .append(Component.text(". This user was banned by ", NamedTextColor.RED))
+                .append(Component.text(staffName, NamedTextColor.WHITE))
+                .append(Component.text(" for: ", NamedTextColor.RED))
+                .append(reasonComponent);
+
+        if (staffNote != null && !staffNote.isBlank()) {
+            message = message
+                    .append(Component.text(" Note: ", NamedTextColor.RED))
+                    .append(Component.text(staffNote, NamedTextColor.WHITE));
+        }
+
+        invocation.source().sendMessage(message);
     }
 
     private String formatDuration(Duration duration) {

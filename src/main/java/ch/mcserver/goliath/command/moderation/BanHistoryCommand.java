@@ -8,6 +8,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -55,11 +56,15 @@ public class BanHistoryCommand implements SimpleCommand {
         Component message = Component.empty();
 
         for (int i = 0; i < punishments.size(); i++) {
-            PlayerPunishment punishment = punishments.get(i);
+            PlayerPunishment punishment = punishments.get(punishments.size() - 1 - i);
 
             String reason = punishment.getReason() == null ? "Unknown reason" : punishment.getReason();
             String staff = punishment.getPunishedBy() == null ? "Console" : punishment.getPunishedBy();
             String status = getStatus(punishment, now);
+
+            Component reasonComponent = reason.contains("&")
+                    ? LegacyComponentSerializer.legacyAmpersand().deserialize(reason)
+                    : Component.text(reason, NamedTextColor.RED);
 
             Component entry = Component.text((i + 1) + ". ", NamedTextColor.RED)
                     .append(Component.text(player.getName(), NamedTextColor.WHITE));
@@ -81,7 +86,7 @@ public class BanHistoryCommand implements SimpleCommand {
             entry = entry.append(Component.text("This user was banned by ", NamedTextColor.RED))
                     .append(Component.text(staff, NamedTextColor.WHITE))
                     .append(Component.text(" for: ", NamedTextColor.RED))
-                    .append(Component.text(reason, NamedTextColor.RED))
+                    .append(reasonComponent)
                     .hoverEvent(Component.text(
                             "Ban ID: " + punishment.getBanId()
                                     + "\nStatus: " + status
