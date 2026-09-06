@@ -19,7 +19,7 @@ public class HistoryEventRepository {
 
     public void createEvent(UUID uuid, String type, String title, String server, String historyId) {
 
-        if (collection.countDocuments(Filters.eq("uuid", uuid.toString())) > 119) {
+        if (collection.countDocuments(Filters.eq("uuid", uuid.toString())) > 499) {
             List<ObjectId> ids = collection.find(Filters.eq("uuid", uuid.toString()))
                     .sort(Sorts.ascending("createdAt"))
                     .limit(1)
