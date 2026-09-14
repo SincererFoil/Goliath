@@ -1,8 +1,8 @@
 package ch.mcserver.goliath;
 
+import ch.mcserver.goliath.anticheat.AnticheatFlagSubscriber;
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
-import ch.mcserver.goliath.command.moderation.IpCommand;
 import ch.mcserver.goliath.command.moderation.*;
 import ch.mcserver.goliath.command.staff.GmspCommand;
 import ch.mcserver.goliath.command.staff.SfModeCommand;
@@ -14,6 +14,7 @@ import ch.mcserver.goliath.database.mysql.MySQLManager;
 import ch.mcserver.goliath.database.mysql.repository.PlayerIpRepository;
 import ch.mcserver.goliath.database.mysql.repository.PlayerLocationRepository;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
+import ch.mcserver.goliath.database.redis.RedisManager;
 import ch.mcserver.goliath.history.HistoryEventListener;
 import ch.mcserver.goliath.history.HistroyLogTypes;
 import ch.mcserver.goliath.history.SnapshotRequestManager;
@@ -54,9 +55,15 @@ import java.util.UUID;
 )
 public class Goliath {
 
+    private static Goliath instance;
+
     private final ProxyServer proxy;
     private final Logger logger;
     private final Path dataDirectory;
+
+    private RedisManager redisManager;
+    private AnticheatFlagSubscriber anticheatFlagSubscriber;
+    private GeoIpService geoIpService;
 
     public static String proxyName = "goliath-EU-proxy1";
     public static final Map<UUID, Float> flySpeeds = new HashMap<>();
@@ -74,10 +81,13 @@ public class Goliath {
     public static ConfigurationNode config;
     public static final Logger LOGGER = LoggerFactory.getLogger(Goliath.class);
 
-    private GeoIpService geoIpService;
-
     @Inject
-    public Goliath(ProxyServer proxy, Logger logger, @DataDirectory Path dataDirectory) {
+    public Goliath(
+            ProxyServer proxy,
+            Logger logger,
+            @DataDirectory Path dataDirectory
+    ) {
+        instance = this;
         this.proxy = proxy;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
@@ -85,16 +95,28 @@ public class Goliath {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        logger.info("Goliath Core enabled.");
-
         loadConfig();
+
+        redisManager = new RedisManager();
+        redisManager.connect();
+
+        anticheatFlagSubscriber = new AnticheatFlagSubscriber(redisManager);
+        anticheatFlagSubscriber.start();
 
         mySQLManager = new MySQLManager();
         mySQLManager.connect();
 
-        java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(java.util.logging.Level.WARNING);
-        java.util.logging.Logger.getLogger("org.mongodb.driver.client").setLevel(java.util.logging.Level.WARNING);
-        java.util.logging.Logger.getLogger("org.mongodb.driver.cluster").setLevel(java.util.logging.Level.WARNING);
+        java.util.logging.Logger
+                .getLogger("org.mongodb.driver")
+                .setLevel(java.util.logging.Level.WARNING);
+
+        java.util.logging.Logger
+                .getLogger("org.mongodb.driver.client")
+                .setLevel(java.util.logging.Level.WARNING);
+
+        java.util.logging.Logger
+                .getLogger("org.mongodb.driver.cluster")
+                .setLevel(java.util.logging.Level.WARNING);
 
         mongoDBManager = new MongoDBManager();
         mongoDBManager.connect();
@@ -106,12 +128,18 @@ public class Goliath {
         goliathTeleportMessenger = new GoliathTeleportMessenger(proxy);
         commandUpdateMessenger = new CommandUpdateMessenger(proxy);
 
-        proxy.getChannelRegistrar().register(MinecraftChannelIdentifier.create("goliath", "location"));
-
-        SnapshotRequestManager snapshotRequestManager = new SnapshotRequestManager(proxy);
-        HistoryEventRepository historyRepository = new HistoryEventRepository(
-                mongoDBManager.getCollection("history_events")
+        proxy.getChannelRegistrar().register(
+                MinecraftChannelIdentifier.create("goliath", "location")
         );
+
+        SnapshotRequestManager snapshotRequestManager =
+                new SnapshotRequestManager(proxy);
+
+        HistoryEventRepository historyRepository =
+                new HistoryEventRepository(
+                        mongoDBManager.getCollection("history_events")
+                );
+
         HistroyLogTypes historyLogTypes = new HistroyLogTypes(
                 proxy,
                 snapshotRequestManager,
@@ -119,166 +147,325 @@ public class Goliath {
         );
 
         GmspMessenger gmspMessenger = new GmspMessenger(proxy);
+
         ch.mcserver.goliath.pluginmessenger.CreativeMessenger creativeMessenger =
                 new ch.mcserver.goliath.pluginmessenger.CreativeMessenger(proxy);
 
-        proxy.getEventManager().register(this, new ProxyPlayerManager());
-        proxy.getEventManager().register(this, creativeMessenger);
-        proxy.getEventManager().register(this, new CommandHider());
-        proxy.getEventManager().register(this, new CommandBlocker());
-        proxy.getEventManager().register(this, new PunishmentConnectListener());
         proxy.getEventManager().register(
                 this,
-                new GmspServerSwitchListener(proxy, this, gmspMessenger, creativeMessenger)
+                new ProxyPlayerManager()
         );
+
         proxy.getEventManager().register(
                 this,
-                new HistoryEventListener(historyLogTypes, proxy, this)
+                creativeMessenger
         );
+
         proxy.getEventManager().register(
                 this,
-                new JoinController(proxy, playerLocationRepository)
+                new CommandHider()
+        );
+
+        proxy.getEventManager().register(
+                this,
+                new CommandBlocker()
+        );
+
+        proxy.getEventManager().register(
+                this,
+                new PunishmentConnectListener()
+        );
+
+        proxy.getEventManager().register(
+                this,
+                new GmspServerSwitchListener(
+                        proxy,
+                        this,
+                        gmspMessenger,
+                        creativeMessenger
+                )
+        );
+
+        proxy.getEventManager().register(
+                this,
+                new HistoryEventListener(
+                        historyLogTypes,
+                        proxy,
+                        this
+                )
+        );
+
+        proxy.getEventManager().register(
+                this,
+                new JoinController(
+                        proxy,
+                        playerLocationRepository
+                )
         );
 
         initializeAltDetection();
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("goliath").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("goliath")
+                        .plugin(this)
+                        .build(),
                 new GoliathCommand(proxy, this)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("whereami").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("whereami")
+                        .plugin(this)
+                        .build(),
                 new WhereAmICommand(proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("giveMedia").aliases("goliath:giveMedia").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("giveMedia")
+                        .aliases("goliath:giveMedia")
+                        .plugin(this)
+                        .build(),
                 new GiveMediaCommand(proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("sfmode").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("sfmode")
+                        .plugin(this)
+                        .build(),
                 new SfModeCommand(proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("gmsp").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("gmsp")
+                        .plugin(this)
+                        .build(),
                 new GmspCommand(gmspMessenger, proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("offend").aliases("punish").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("offend")
+                        .aliases("punish")
+                        .plugin(this)
+                        .build(),
                 new OffendCommand(proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("checkban").aliases("goliath:checkban").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("checkban")
+                        .aliases("goliath:checkban")
+                        .plugin(this)
+                        .build(),
                 new CheckBanCommand()
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("ban").aliases("goliath:ban").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("ban")
+                        .aliases("goliath:ban")
+                        .plugin(this)
+                        .build(),
                 new BanCommand(proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("unban").aliases("goliath:unban").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("unban")
+                        .aliases("goliath:unban")
+                        .plugin(this)
+                        .build(),
                 new UnbanCommand()
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("gtp").aliases("goliath:gtp").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("gtp")
+                        .aliases("goliath:gtp")
+                        .plugin(this)
+                        .build(),
                 new GoliathTeleportCommand(proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("fp").aliases("findplayer").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("fp")
+                        .aliases("findplayer")
+                        .plugin(this)
+                        .build(),
                 new FindPlayerCommand(proxy)
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("alts").aliases("goliath:alts").plugin(this).build(),
-                new AltsCommand(proxy, playerRepository, playerIpRepository)
+                proxy.getCommandManager()
+                        .metaBuilder("alts")
+                        .aliases("goliath:alts")
+                        .plugin(this)
+                        .build(),
+                new AltsCommand(
+                        proxy,
+                        playerRepository,
+                        playerIpRepository
+                )
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("banhistory").aliases("goliath:banhistory").plugin(this).build(),
-                new BanHistoryCommand(playerRepository, proxy)
+                proxy.getCommandManager()
+                        .metaBuilder("banhistory")
+                        .aliases("goliath:banhistory")
+                        .plugin(this)
+                        .build(),
+                new BanHistoryCommand(
+                        playerRepository,
+                        proxy
+                )
         );
 
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("ip").aliases("goliath:ip").plugin(this).build(),
+                proxy.getCommandManager()
+                        .metaBuilder("ip")
+                        .aliases("goliath:ip")
+                        .plugin(this)
+                        .build(),
                 new IpCommand(proxy)
         );
+
+        logger.info("Goliath Core enabled.");
     }
 
     private void initializeAltDetection() {
-        String ipHashSecret = config.node("alts", "ip-hash-secret").getString();
-        Path geoIpDatabase = dataDirectory.resolve("GeoLite2-City.mmdb");
+        String ipHashSecret = config
+                .node("alts", "ip-hash-secret")
+                .getString();
+
+        Path geoIpDatabase =
+                dataDirectory.resolve("GeoLite2-City.mmdb");
 
         if (ipHashSecret == null || ipHashSecret.isBlank()) {
-            logger.error("[Goliath] alts.ip-hash-secret is missing in config.yml.");
+            logger.error(
+                    "[Goliath] alts.ip-hash-secret is missing in config.yml."
+            );
             return;
         }
 
         if (!Files.exists(geoIpDatabase)) {
-            logger.error("[Goliath] GeoLite2-City.mmdb was not found at: {}", geoIpDatabase);
+            logger.error(
+                    "[Goliath] GeoLite2-City.mmdb was not found at: {}",
+                    geoIpDatabase
+            );
             return;
         }
 
         try {
             geoIpService = new GeoIpService(geoIpDatabase.toFile());
+
             IpHasher ipHasher = new IpHasher(ipHashSecret);
 
             proxy.getEventManager().register(
                     this,
-                    new PlayerIpConnectListener(playerIpRepository, geoIpService, ipHasher)
+                    new PlayerIpConnectListener(
+                            playerIpRepository,
+                            geoIpService,
+                            ipHasher
+                    )
             );
 
             logger.info("[Goliath] Alt detection enabled.");
         } catch (IOException exception) {
-            logger.error("[Goliath] Could not load GeoLite2-City.mmdb.", exception);
+            logger.error(
+                    "[Goliath] Could not load GeoLite2-City.mmdb.",
+                    exception
+            );
         }
     }
 
     private void loadConfig() {
         try {
             Files.createDirectories(dataDirectory);
-            Path configPath = dataDirectory.resolve("config.yml");
+
+            Path configPath =
+                    dataDirectory.resolve("config.yml");
 
             if (!Files.exists(configPath)) {
-                try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("config.yml")) {
+                try (InputStream inputStream =
+                             getClass()
+                                     .getClassLoader()
+                                     .getResourceAsStream("config.yml")) {
+
                     if (inputStream == null) {
-                        throw new IOException("config.yml not found in resources.");
+                        throw new IOException(
+                                "config.yml not found in resources."
+                        );
                     }
 
                     Files.copy(inputStream, configPath);
                 }
             }
 
-            YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
-                    .path(configPath)
-                    .build();
+            YamlConfigurationLoader loader =
+                    YamlConfigurationLoader.builder()
+                            .path(configPath)
+                            .build();
 
             config = loader.load();
+
             logger.info("[Goliath] Config loaded.");
         } catch (Exception exception) {
-            logger.error("[Goliath] Failed to load config.", exception);
+            logger.error(
+                    "[Goliath] Failed to load config.",
+                    exception
+            );
         }
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
-        if (geoIpService == null) {
-            return;
+        if (geoIpService != null) {
+            try {
+                geoIpService.close();
+            } catch (IOException exception) {
+                logger.error(
+                        "[Goliath] Could not close GeoIP database.",
+                        exception
+                );
+            }
         }
 
-        try {
-            geoIpService.close();
-        } catch (IOException exception) {
-            logger.error("[Goliath] Could not close GeoIP database.", exception);
+        if (anticheatFlagSubscriber != null) {
+            anticheatFlagSubscriber.shutdown();
         }
+
+        if (redisManager != null) {
+            redisManager.close();
+        }
+
+        instance = null;
+
+        logger.info("Goliath Core disabled.");
+    }
+
+    public static Goliath getInstance() {
+        return instance;
+    }
+
+    public ProxyServer getProxy() {
+        return proxy;
+    }
+
+    public Logger getLogger() {
+        return logger;
+    }
+
+    public Path getDataDirectory() {
+        return dataDirectory;
+    }
+
+    public RedisManager getRedisManager() {
+        return redisManager;
     }
 
     public GoliathTeleportMessenger getGoliathTeleportMessenger() {

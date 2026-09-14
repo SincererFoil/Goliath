@@ -50,7 +50,7 @@ public class ProxyPlayerManager {
                     playerObject = Goliath.playerRepository.loadPlayer(uuid);
                     playerObject.setSfmode(false);
 
-                    if (playerObject.getName().equals(player.getUsername())) {
+                    if (!playerObject.getName().equals(player.getUsername())) {
                         playerObject.setName(player.getUsername());
                         Goliath.playerRepository.save(playerObject);
                     }
