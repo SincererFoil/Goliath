@@ -7,6 +7,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -48,10 +49,13 @@ public class ProxyPlayerManager {
 
                     playerObject = Goliath.playerRepository.loadPlayer(uuid);
                     playerObject.setSfmode(false);
-                    playerObject.setGmsp(false);
+
+                    if (playerObject.getName().equals(player.getUsername())) {
+                        playerObject.setName(player.getUsername());
+                        Goliath.playerRepository.save(playerObject);
+                    }
 
                 } else {
-
                     long now = System.currentTimeMillis();
 
                     playerObject = new ProxyPlayerObject(
@@ -76,7 +80,7 @@ public class ProxyPlayerManager {
 
             } catch (Exception e) {
                 Goliath.LOGGER.error("Failed to load player data for {}", uuid, e);
-                player.disconnect(Component.text("Fehler beim Laden deiner Daten. Bitte erneut verbinden."));
+                player.disconnect(Component.text("We dont know what happend here! You should make a ticket  #DBLF054", NamedTextColor.RED));
             }
         });
     }
