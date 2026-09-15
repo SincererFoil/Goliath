@@ -1,6 +1,7 @@
 package ch.mcserver.goliath.anticheat;
 
 import ch.mcserver.goliath.Goliath;
+import ch.mcserver.goliath.anticheat.alert.AnticheatAlert;
 import ch.mcserver.goliath.database.redis.RedisManager;
 import com.google.gson.Gson;
 import redis.clients.jedis.JedisPubSub;
@@ -36,6 +37,7 @@ public class AnticheatFlagSubscriber {
                         AnticheatFlagMessage flagMessage = gson.fromJson(message, AnticheatFlagMessage.class);
 
                         // TODO ALERT + 1x  /sus entry
+                        sendAlert(flagMessage);
                     }
                 };
 
@@ -44,6 +46,10 @@ public class AnticheatFlagSubscriber {
                 ex.printStackTrace();
             }
         });
+    }
+
+    private void sendAlert(AnticheatFlagMessage flagMessage) {
+        Goliath.getInstance().getAnticheatAlert().sendAlert(flagMessage);
     }
 
     public void shutdown() {

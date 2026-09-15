@@ -1,6 +1,8 @@
 package ch.mcserver.goliath;
 
 import ch.mcserver.goliath.anticheat.AnticheatFlagSubscriber;
+import ch.mcserver.goliath.anticheat.alert.AnticheatAlert;
+import ch.mcserver.goliath.anticheat.command.GuardCommand;
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
 import ch.mcserver.goliath.command.moderation.*;
@@ -61,6 +63,8 @@ public class Goliath {
     private final Logger logger;
     private final Path dataDirectory;
 
+    private AnticheatAlert anticheatAlert;
+
     private RedisManager redisManager;
     private AnticheatFlagSubscriber anticheatFlagSubscriber;
     private GeoIpService geoIpService;
@@ -99,6 +103,8 @@ public class Goliath {
 
         redisManager = new RedisManager();
         redisManager.connect();
+
+        anticheatAlert = new AnticheatAlert(proxy);
 
         anticheatFlagSubscriber = new AnticheatFlagSubscriber(redisManager);
         anticheatFlagSubscriber.start();
@@ -327,6 +333,15 @@ public class Goliath {
 
         proxy.getCommandManager().register(
                 proxy.getCommandManager()
+                        .metaBuilder("guard")
+                        .aliases("goliath:guard")
+                        .plugin(this)
+                        .build(),
+                new GuardCommand()
+        );
+
+        proxy.getCommandManager().register(
+                proxy.getCommandManager()
                         .metaBuilder("ip")
                         .aliases("goliath:ip")
                         .plugin(this)
@@ -458,6 +473,10 @@ public class Goliath {
 
     public Logger getLogger() {
         return logger;
+    }
+
+    public AnticheatAlert getAnticheatAlert() {
+        return anticheatAlert;
     }
 
     public Path getDataDirectory() {

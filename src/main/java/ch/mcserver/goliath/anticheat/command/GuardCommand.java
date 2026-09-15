@@ -26,12 +26,7 @@ public class GuardCommand implements SimpleCommand {
         }
 
         switch (args[0].toLowerCase()) {
-            case  "alert":
-
-                break;
-            default:
-                invocation.source().sendMessage(Component.text("Wrong usage: /guard <alert>", NamedTextColor.RED));
-                return;
+            case "alert" -> toggleAlert(invocation);
         }
 
     }
@@ -46,9 +41,11 @@ public class GuardCommand implements SimpleCommand {
         Player player = (Player) invocation.source();
 
         if (enabledAlerts.contains(player.getUniqueId())) {
+            player.sendMessage(Component.text("Alerts off", NamedTextColor.GRAY));
             enabledAlerts.remove(player.getUniqueId());
         } else  {
             enabledAlerts.add(player.getUniqueId());
+            player.sendMessage(Component.text("Alerts on", NamedTextColor.GRAY));
         }
 
     }
