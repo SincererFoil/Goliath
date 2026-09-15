@@ -220,7 +220,7 @@ public class OffendCommand implements SimpleCommand {
                                 .appendNewline()
                                 .append(Component.text("You may be able to appeal this ban on", NamedTextColor.GRAY))
                                 .appendNewline()
-                                .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
+                                .append(Component.text("discord.gg/mcserver", NamedTextColor.WHITE))
                 );
                 return;
             }
@@ -251,7 +251,7 @@ public class OffendCommand implements SimpleCommand {
                             .appendNewline()
                             .append(Component.text("You may be able to appeal this ban on", NamedTextColor.GRAY))
                             .appendNewline()
-                            .append(Component.text("discord.gg/donutsmp", NamedTextColor.WHITE))
+                            .append(Component.text("discord.gg/mcserver", NamedTextColor.WHITE))
             );
         }
     }

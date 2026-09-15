@@ -48,7 +48,7 @@ public class BackendKickListener {
                     .appendNewline()
                     .append(Component.text("Please create a support ticket on our Discord.", NamedTextColor.WHITE))
                     .appendNewline()
-                    .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
+                    .append(Component.text("discord.gg/mcserver", NamedTextColor.YELLOW));
         }
 
         event.setResult(KickedFromServerEvent.DisconnectPlayer.create(kickMessage));

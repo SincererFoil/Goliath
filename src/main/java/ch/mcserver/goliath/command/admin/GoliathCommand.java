@@ -129,7 +129,7 @@ public class GoliathCommand implements SimpleCommand {
                     .append(Component.text("For more information check the updates channel.", NamedTextColor.WHITE))
                     .appendNewline()
                     .append(Component.text("Join our Discord: ", NamedTextColor.GRAY))
-                    .append(Component.text("discord.gg/donutsmp", NamedTextColor.YELLOW));
+                    .append(Component.text("discord.gg/mcserver", NamedTextColor.YELLOW));
 
             for (Player player : proxy.getAllPlayers()) {
                 player.disconnect(message);

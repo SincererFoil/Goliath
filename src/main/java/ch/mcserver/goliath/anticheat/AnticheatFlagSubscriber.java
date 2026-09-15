@@ -33,7 +33,9 @@ public class AnticheatFlagSubscriber {
                 jedisPubSub = new JedisPubSub() {
                     @Override
                     public  void onMessage(String channel, String message) {
-                        Goliath.LOGGER.info(message);
+                        AnticheatFlagMessage flagMessage = gson.fromJson(message, AnticheatFlagMessage.class);
+
+                        // TODO ALERT + 1x  /sus entry
                     }
                 };
 
