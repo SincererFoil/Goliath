@@ -1,79 +1,123 @@
 package ch.mcserver.goliath.pluginmessenger;
 
-import ch.mcserver.goliath.player.ProxyPlayerObject;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import java.util.Optional;
 import java.util.UUID;
-
 
 public class SusInspectionMessenger {
 
-    public static final MinecraftChannelIdentifier CHANNEL = MinecraftChannelIdentifier.from("goliath:anticheat:sus");
+    public static final MinecraftChannelIdentifier CHANNEL =
+            MinecraftChannelIdentifier.from("goliath:anticheat:sus");
 
     private final ProxyServer proxy;
 
     public SusInspectionMessenger(ProxyServer proxy) {
         this.proxy = proxy;
-        this.proxy.getChannelRegistrar().register(CHANNEL);
+        proxy.getChannelRegistrar().register(CHANNEL);
     }
 
-    public void sendOpenSusMessage(UUID staffUuid) {
+    public boolean sendOpenSusMessage(UUID staffUuid, String suspectsJson) {
+        if (staffUuid == null || suspectsJson == null) {
+            return false;
+        }
 
-       if (staffUuid == null) {
-           return;
-       }
+        Optional<ServerConnection> connection = getConnection(staffUuid);
 
-       RegisteredServer registeredServer = proxy.getPlayer(staffUuid).orElseThrow().getCurrentServer().orElseThrow().getServer();
+        if (connection.isEmpty()) {
+            return false;
+        }
 
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
 
-        out.writeUTF("OPEN");
-        out.writeUTF(staffUuid.toString());
+        output.writeUTF("OPEN");
+        output.writeUTF(staffUuid.toString());
+        output.writeUTF(suspectsJson);
 
-        registeredServer.sendPluginMessage(
+        return connection.get().sendPluginMessage(
                 CHANNEL,
-                out.toByteArray()
+                output.toByteArray()
         );
     }
 
-    public void sendStartSusInspectionMessage(UUID staffUuid, UUID targetUuid) {
+    public boolean sendStartSusInspectionMessage(
+            UUID staffUuid,
+            UUID targetUuid
+    ) {
+        if (staffUuid == null || targetUuid == null) {
+            return false;
+        }
 
-        RegisteredServer registeredServer = proxy.getPlayer(targetUuid).orElseThrow().getCurrentServer().orElseThrow().getServer();
+        Optional<Player> staffOptional = proxy.getPlayer(staffUuid);
+        Optional<Player> targetOptional = proxy.getPlayer(targetUuid);
 
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        if (staffOptional.isEmpty() || targetOptional.isEmpty()) {
+            return false;
+        }
 
-        out.writeUTF("START_INSPECTION");
-        out.writeUTF(staffUuid.toString());
-        out.writeUTF(targetUuid.toString());
+        Optional<ServerConnection> staffConnection =
+                staffOptional.get().getCurrentServer();
 
-        registeredServer.sendPluginMessage(
+        Optional<ServerConnection> targetConnection =
+                targetOptional.get().getCurrentServer();
+
+        if (staffConnection.isEmpty() || targetConnection.isEmpty()) {
+            return false;
+        }
+
+        String staffServer = staffConnection.get()
+                .getServerInfo()
+                .getName();
+
+        String targetServer = targetConnection.get()
+                .getServerInfo()
+                .getName();
+
+        if (!staffServer.equals(targetServer)) {
+            return false;
+        }
+
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+
+        output.writeUTF("START_INSPECTION");
+        output.writeUTF(staffUuid.toString());
+        output.writeUTF(targetUuid.toString());
+
+        return staffConnection.get().sendPluginMessage(
                 CHANNEL,
-                out.toByteArray()
+                output.toByteArray()
         );
-
     }
 
-    public void sendStopSusInspectionMessage(UUID staffUuid, UUID targetUuid) {
+    public boolean sendStopSusInspectionMessage(UUID staffUuid) {
+        if (staffUuid == null) {
+            return false;
+        }
 
-        RegisteredServer registeredServer = proxy.getPlayer(targetUuid).orElseThrow().getCurrentServer().orElseThrow().getServer();
+        Optional<ServerConnection> connection = getConnection(staffUuid);
 
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        if (connection.isEmpty()) {
+            return false;
+        }
 
-        out.writeUTF("STOP_INSPECTION");
-        out.writeUTF(staffUuid.toString());
-        out.writeUTF(targetUuid.toString());
-        registeredServer.sendPluginMessage(
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+
+        output.writeUTF("STOP_INSPECTION");
+        output.writeUTF(staffUuid.toString());
+
+        return connection.get().sendPluginMessage(
                 CHANNEL,
-                out.toByteArray()
+                output.toByteArray()
         );
-
     }
 
-
+    private Optional<ServerConnection> getConnection(UUID playerUuid) {
+        return proxy.getPlayer(playerUuid)
+                .flatMap(Player::getCurrentServer);
+    }
 }

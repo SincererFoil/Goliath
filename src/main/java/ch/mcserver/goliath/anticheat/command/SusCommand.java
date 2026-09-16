@@ -21,7 +21,7 @@ public class SusCommand implements SimpleCommand {
         Player player = (Player) invocation.source();
 
         if (args.length < 1) {
-            Goliath.getInstance().getSusInspectionMessenger().sendOpenSusMessage(player.getUniqueId());
+            Goliath.getInstance().getSusInspectionMessenger().sendOpenSusMessage(player.getUniqueId(), "");
         }
 
         switch (args[0]) {
