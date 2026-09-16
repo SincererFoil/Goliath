@@ -326,7 +326,7 @@ public class OffendCommand implements SimpleCommand {
     }};
 
     public static final HashMap<String, String> punishmentText = new HashMap<>() {{
-        put("autopunish", "&f&l Your account has been placed on hold.\n &7 We need to chat with you about something \n \n &7 Please open a ticket in the Donut SMP Discord \n &7 abd we'll get you back as soon as possible!");
+        put("autopunish", "&f&l Your account has been placed on hold.\n &7 We need to chat with you about something \n \n &7 Please open a ticket in the Mcserver SMP Discord \n &7 abd we'll get you back as soon as possible!");
         put("ban-evading", "You are temporarily banned for joining on another account while being banned.");
         put("bug-abuse", "You are temporarily banned for abusing a bug/issue.");
         put("cross-trading", "You are temporarily banned for cross trading.");
@@ -339,7 +339,7 @@ public class OffendCommand implements SimpleCommand {
         put("gambling-ownership", "You are temporarily banned for gambling ownership.");
 
         put("hacking", "You are temporarily banned for hacking.");
-        put("make-a-ticket", "&f&l Your account has been placed on hold.\n &7 We need to chat with you about something \n \n &7 Please open a ticket in the Donut SMP Discord \n &7 abd we'll get you back as soon as possible!");
+        put("make-a-ticket", "&f&l Your account has been placed on hold.\n &7 We need to chat with you about something \n \n &7 Please open a ticket in the Mcserver SMP Discord \n &7 abd we'll get you back as soon as possible!");
 
         put("mute-evasion", "You are temporarily banned for mute evasion.");
         put("macro-scripts", "You are temporarily banned for using macros or scripts.");
