@@ -3,7 +3,6 @@ package ch.mcserver.goliath;
 import ch.mcserver.goliath.anticheat.AnticheatFlagSubscriber;
 import ch.mcserver.goliath.anticheat.alert.AnticheatAlert;
 import ch.mcserver.goliath.anticheat.command.GuardCommand;
-import ch.mcserver.goliath.anticheat.command.SusCommand;
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
 import ch.mcserver.goliath.command.moderation.*;
@@ -29,7 +28,6 @@ import ch.mcserver.goliath.player.location.JoinController;
 import ch.mcserver.goliath.pluginmessenger.CommandUpdateMessenger;
 import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import ch.mcserver.goliath.pluginmessenger.GoliathTeleportMessenger;
-import ch.mcserver.goliath.pluginmessenger.SusInspectionMessenger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -79,7 +77,6 @@ public class Goliath {
     public static MongoDBManager mongoDBManager;
 
     public static GoliathTeleportMessenger goliathTeleportMessenger;
-    public static SusInspectionMessenger susInspectionMessenger;
     public static CommandUpdateMessenger commandUpdateMessenger;
 
     public static PlayerRepository playerRepository;
@@ -136,7 +133,6 @@ public class Goliath {
         playerIpRepository = new PlayerIpRepository(mySQLManager);
 
         goliathTeleportMessenger = new GoliathTeleportMessenger(proxy);
-        susInspectionMessenger = new SusInspectionMessenger(proxy);
         commandUpdateMessenger = new CommandUpdateMessenger(proxy);
 
         proxy.getChannelRegistrar().register(
@@ -496,7 +492,4 @@ public class Goliath {
         return goliathTeleportMessenger;
     }
 
-    public SusInspectionMessenger getSusInspectionMessenger() {
-        return  susInspectionMessenger;
-    }
 }
