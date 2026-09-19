@@ -2,6 +2,7 @@ package ch.mcserver.goliath.anticheat;
 
 import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.anticheat.alert.AnticheatAlert;
+import ch.mcserver.goliath.database.mongodb.repository.AnticheatPunishRepository;
 import ch.mcserver.goliath.database.redis.RedisManager;
 import com.google.gson.Gson;
 import com.mysql.cj.protocol.x.XProtocolRowInputStream;
@@ -34,10 +35,13 @@ public class AnticheatFlagSubscriber {
 
     private final ProxyServer proxy;
 
+    private final AnticheatPunishRepository anticheatPunishRepository;
 
-    public  AnticheatFlagSubscriber(RedisManager redisManager, ProxyServer proxy) {
+
+    public  AnticheatFlagSubscriber(RedisManager redisManager, ProxyServer proxy, AnticheatPunishRepository anticheatPunishRepository) {
         this.redisManager = redisManager;
         this.proxy = proxy;
+        this.anticheatPunishRepository = anticheatPunishRepository;
     }
 
     public void start() {
@@ -75,11 +79,14 @@ public class AnticheatFlagSubscriber {
                         if (optionalPlayer.isPresent()) {
                             ping = optionalPlayer.get().getPing() + "ms";
                         }
-                        Goliath.LOGGER.info("BANNED PLAYER " + flagMessage.flagData().playerName());
-                        proxy.getCommandManager().executeAsync(proxy.getConsoleCommandSource(), "offend " + flagMessage.flagData().playerName() + " " + flagMessage.punishReason() + " note:" + flagMessage.flagData().checkName() + " | VL=" +
-                                flagMessage.flagData().violations() + " | BUFFER=" + flagMessage.flagData().details() + " | PING=" + ping);
 
-                        Goliath.LOGGER.info("BANNED PLAYER ");
+                        UUID punishmentUuid = UUID.randomUUID();
+
+                        anticheatPunishRepository.createPunishmentLog(flagMessage, ping, punishmentUuid);
+
+                        proxy.getCommandManager().executeAsync(proxy.getConsoleCommandSource(), "offend " + flagMessage.flagData().playerName() + " "
+                        + flagMessage.punishReason() + " note: " + punishmentUuid);
+
                     }
                 };
 

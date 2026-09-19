@@ -11,6 +11,7 @@ import ch.mcserver.goliath.command.staff.SfModeCommand;
 import ch.mcserver.goliath.command.utility.FindPlayerCommand;
 import ch.mcserver.goliath.command.utility.WhereAmICommand;
 import ch.mcserver.goliath.database.mongodb.MongoDBManager;
+import ch.mcserver.goliath.database.mongodb.repository.AnticheatPunishRepository;
 import ch.mcserver.goliath.database.mongodb.repository.HistoryEventRepository;
 import ch.mcserver.goliath.database.mysql.MySQLManager;
 import ch.mcserver.goliath.database.mysql.repository.PlayerIpRepository;
@@ -107,8 +108,6 @@ public class Goliath {
 
         anticheatAlert = new AnticheatAlert(proxy);
 
-        anticheatFlagSubscriber = new AnticheatFlagSubscriber(redisManager, proxy);
-        anticheatFlagSubscriber.start();
 
         mySQLManager = new MySQLManager();
         mySQLManager.connect();
@@ -142,16 +141,13 @@ public class Goliath {
         SnapshotRequestManager snapshotRequestManager =
                 new SnapshotRequestManager(proxy);
 
-        HistoryEventRepository historyRepository =
-                new HistoryEventRepository(
-                        mongoDBManager.getCollection("history_events")
-                );
+        HistoryEventRepository historyRepository = new HistoryEventRepository(mongoDBManager.getCollection("history_events"));
+        AnticheatPunishRepository anticheatPunishRepository = new AnticheatPunishRepository(mongoDBManager.getCollection("anticheat_punishments"), proxyName);
 
-        HistroyLogTypes historyLogTypes = new HistroyLogTypes(
-                proxy,
-                snapshotRequestManager,
-                historyRepository
-        );
+        HistroyLogTypes historyLogTypes = new HistroyLogTypes(proxy, snapshotRequestManager, historyRepository);
+        anticheatFlagSubscriber = new AnticheatFlagSubscriber(redisManager, proxy, anticheatPunishRepository);
+
+        anticheatFlagSubscriber.start();
 
         GmspMessenger gmspMessenger = new GmspMessenger(proxy);
 
