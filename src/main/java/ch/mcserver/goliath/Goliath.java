@@ -107,7 +107,7 @@ public class Goliath {
 
         anticheatAlert = new AnticheatAlert(proxy);
 
-        anticheatFlagSubscriber = new AnticheatFlagSubscriber(redisManager);
+        anticheatFlagSubscriber = new AnticheatFlagSubscriber(redisManager, proxy);
         anticheatFlagSubscriber.start();
 
         mySQLManager = new MySQLManager();
