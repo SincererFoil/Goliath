@@ -5,7 +5,6 @@ import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 
 import java.util.UUID;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

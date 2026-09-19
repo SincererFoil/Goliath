@@ -94,7 +94,7 @@ public class OffendCommand implements SimpleCommand {
 
         long banRawTime = durations.get(rawReason);
         boolean isWiped = wipes.getOrDefault(rawReason, false);
-        boolean isPermanent = Set.of("autopunish", "make-a-ticket").contains(rawReason);
+        boolean isPermanent = Set.of("autopunish", "make-a-ticket", "botting", "anticheat", "alt-limit").contains(rawReason);
         String banText = punishmentText.get(rawReason);
 
         if (banText == null) {
@@ -267,10 +267,18 @@ public class OffendCommand implements SimpleCommand {
     public static final HashMap<String, Long> durations = new HashMap<>() {{
         put("autopunish", 30L * 24 * 60 * 60 * 1000);
 
+        put("botting", 30L * 24 * 60 * 60 * 1000);
         put("ban-evading", 30L * 24 * 60 * 60 * 1000);
         put("bug-abuse", 14L * 24 * 60 * 60 * 1000);
         put("cross-trading", 30L * 24 * 60 * 60 * 1000);
         put("cheating", 14L * 24 * 60 * 60 * 1000);
+        put("custom-cheat-client", 60L * 24 * 60 * 60 * 1000);
+        put("anticheat", 60L * 24 * 60 * 60 * 1000);
+        put("advertising", 60L * 24 * 60 * 60 * 1000);
+        put("advertising-cheat-client", 60L * 24 * 60 * 60 * 1000);
+        put("advertising-irl-trade", 60L * 24 * 60 * 60 * 1000);
+        put("alt-limit", 20L * 60 * 60 * 60  * 1000);
+        put("auto-chat-filter", 30L * 24 * 60 * 60 * 1000);
         put("doxing", 365L * 24 * 60 * 60 * 1000);
         put("duping", 365L * 24 * 60 * 60 * 1000);
 
@@ -292,7 +300,7 @@ public class OffendCommand implements SimpleCommand {
         put("ratting", 365L * 24 * 60 * 60 * 1000);
 
         put("soundboard-proximity", 7L * 24 * 60 * 60 * 1000);
-        put("spamming-chat", 1L * 24 * 60 * 60 * 1000);
+        put("spam-chat", 1L * 24 * 60 * 60 * 1000);
 
         put("streaming-advertising-rat-clients", 365L * 24 * 60 * 60 * 1000);
         put("streaming-cheat-client-pvp", 30L * 24 * 60 * 60 * 1000);
@@ -328,9 +336,11 @@ public class OffendCommand implements SimpleCommand {
     public static final HashMap<String, String> punishmentText = new HashMap<>() {{
         put("autopunish", "&f&l Your account has been placed on hold.\n &7 We need to chat with you about something \n \n &7 Please open a ticket in the Mcserver SMP Discord \n &7 abd we'll get you back as soon as possible!");
         put("ban-evading", "You are temporarily banned for joining on another account while being banned.");
+        put("botting", "You are permanently banned for botting.");
         put("bug-abuse", "You are temporarily banned for abusing a bug/issue.");
         put("cross-trading", "You are temporarily banned for cross trading.");
         put("cheating", "You are temporarily banned for cheating.");
+        put("custom-cheat-client", "You are temporarily banned for using a custom cheat client.");
         put("doxing", "You are temporarily banned for doxing.");
         put("duping", "You are temporarily banned for duplicating items.");
 
@@ -352,7 +362,7 @@ public class OffendCommand implements SimpleCommand {
         put("ratting", "You are temporarily banned for ratting.");
 
         put("soundboard-proximity", "You are temporarily muted for soundboard abuse in proximity chat.");
-        put("spamming-chat", "You are temporarily muted for spamming chat.");
+        put("spam-chat", "You are temporarily muted for spamming chat.");
 
         put("streaming-advertising-rat-clients", "You are temporarily banned for advertising rat clients while streaming.");
         put("streaming-cheat-client-pvp", "You are temporarily banned for streaming cheat client gameplay.");
@@ -388,6 +398,7 @@ public class OffendCommand implements SimpleCommand {
     public static final HashMap<String, Boolean> wipes = new HashMap<>() {{
         put("autopunish", false);
 
+        put("botting", true);
         put("ban-evading", true);
         put("bug-abuse", false);
         put("cross-trading", true);
