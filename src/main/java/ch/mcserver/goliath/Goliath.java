@@ -3,6 +3,8 @@ package ch.mcserver.goliath;
 import ch.mcserver.goliath.anticheat.AnticheatFlagSubscriber;
 import ch.mcserver.goliath.anticheat.alert.AnticheatAlert;
 import ch.mcserver.goliath.anticheat.command.GuardCommand;
+import ch.mcserver.goliath.anticheat.listener.AnticheatListener;
+import ch.mcserver.goliath.anticheat.module.session.SessionManager;
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
 import ch.mcserver.goliath.command.moderation.*;
@@ -42,11 +44,15 @@ import org.slf4j.LoggerFactory;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
+import javax.rmi.ssl.SslRMIServerSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.UUID;
 
@@ -71,7 +77,6 @@ public class Goliath {
     private AnticheatFlagSubscriber anticheatFlagSubscriber;
     private GeoIpService geoIpService;
 
-    public static String proxyName = "goliath-EU-proxy1";
     public static final Map<UUID, Float> flySpeeds = new HashMap<>();
 
     public static MySQLManager mySQLManager;
@@ -86,6 +91,10 @@ public class Goliath {
 
     public static ConfigurationNode config;
     public static final Logger LOGGER = LoggerFactory.getLogger(Goliath.class);
+    public static String proxyName;
+
+    private SessionManager sessionManager;
+
 
     @Inject
     public Goliath(
@@ -102,7 +111,7 @@ public class Goliath {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         loadConfig();
-
+        proxyName = config.node("proxyName").getString();
         redisManager = new RedisManager();
         redisManager.connect();
 
@@ -134,6 +143,8 @@ public class Goliath {
         goliathTeleportMessenger = new GoliathTeleportMessenger(proxy);
         commandUpdateMessenger = new CommandUpdateMessenger(proxy);
 
+        sessionManager = new SessionManager(redisManager, buildProxyId());
+
         proxy.getChannelRegistrar().register(
                 MinecraftChannelIdentifier.create("goliath", "location")
         );
@@ -151,8 +162,7 @@ public class Goliath {
 
         GmspMessenger gmspMessenger = new GmspMessenger(proxy);
 
-        ch.mcserver.goliath.pluginmessenger.CreativeMessenger creativeMessenger =
-                new ch.mcserver.goliath.pluginmessenger.CreativeMessenger(proxy);
+        ch.mcserver.goliath.pluginmessenger.CreativeMessenger creativeMessenger = new ch.mcserver.goliath.pluginmessenger.CreativeMessenger(proxy);
 
         proxy.getEventManager().register(
                 this,
@@ -186,6 +196,13 @@ public class Goliath {
                         this,
                         gmspMessenger,
                         creativeMessenger
+                )
+        );
+
+        proxy.getEventManager().register(
+                this,
+                new AnticheatListener(
+                      sessionManager
                 )
         );
 
@@ -434,6 +451,18 @@ public class Goliath {
         }
     }
 
+    private String buildProxyId() {
+        String proxyName = Goliath.proxyName;
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] proxyId = messageDigest.digest(proxyName.getBytes());
+            return HexFormat.of().formatHex(proxyId).substring(0, 11);
+        } catch (NoSuchAlgorithmException e) {
+            Goliath.getInstance().getLogger().info("Failed to get the MessageDigest algorithm. Exception: " + e.toString());
+            return null;
+        }
+    }
+
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         if (geoIpService != null) {
@@ -486,6 +515,10 @@ public class Goliath {
 
     public GoliathTeleportMessenger getGoliathTeleportMessenger() {
         return goliathTeleportMessenger;
+    }
+
+    public SessionManager getSessionManager() {
+        return sessionManager;
     }
 
 }
