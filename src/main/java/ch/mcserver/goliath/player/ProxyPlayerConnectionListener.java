@@ -31,7 +31,12 @@ public class ProxyPlayerConnectionListener {
     @Subscribe
     public EventTask onPlayerDisconnect(DisconnectEvent event) {
 
-        if (event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
+        DisconnectEvent.LoginStatus status = event.getLoginStatus();
+
+        boolean shouldCleanup = status == DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN || status == DisconnectEvent.LoginStatus.CANCELLED_BY_USER_BEFORE_COMPLETE || status == DisconnectEvent.LoginStatus.PRE_SERVER_JOIN;
+
+
+        if (!shouldCleanup) {
             return null;
         }
 
