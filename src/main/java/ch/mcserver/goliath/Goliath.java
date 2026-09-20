@@ -3,8 +3,6 @@ package ch.mcserver.goliath;
 import ch.mcserver.goliath.anticheat.AnticheatFlagSubscriber;
 import ch.mcserver.goliath.anticheat.alert.AnticheatAlert;
 import ch.mcserver.goliath.anticheat.command.GuardCommand;
-import ch.mcserver.goliath.anticheat.listener.AnticheatListener;
-import ch.mcserver.goliath.anticheat.module.session.SessionManager;
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
 import ch.mcserver.goliath.command.moderation.*;
@@ -24,10 +22,12 @@ import ch.mcserver.goliath.history.HistoryEventListener;
 import ch.mcserver.goliath.history.HistroyLogTypes;
 import ch.mcserver.goliath.history.SnapshotRequestManager;
 import ch.mcserver.goliath.listener.*;
+import ch.mcserver.goliath.player.ProxyPlayerConnectionListener;
 import ch.mcserver.goliath.player.ProxyPlayerManager;
 import ch.mcserver.goliath.player.alts.GeoIpService;
 import ch.mcserver.goliath.player.alts.IpHasher;
 import ch.mcserver.goliath.player.location.JoinController;
+import ch.mcserver.goliath.player.session.ProxyPlayerSessionManager;
 import ch.mcserver.goliath.pluginmessenger.CommandUpdateMessenger;
 import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import ch.mcserver.goliath.pluginmessenger.GoliathTeleportMessenger;
@@ -44,9 +44,9 @@ import org.slf4j.LoggerFactory;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-import javax.rmi.ssl.SslRMIServerSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -93,7 +93,7 @@ public class Goliath {
     public static final Logger LOGGER = LoggerFactory.getLogger(Goliath.class);
     public static String proxyName;
 
-    private SessionManager sessionManager;
+    private ProxyPlayerSessionManager sessionManager;
 
 
     @Inject
@@ -143,7 +143,7 @@ public class Goliath {
         goliathTeleportMessenger = new GoliathTeleportMessenger(proxy);
         commandUpdateMessenger = new CommandUpdateMessenger(proxy);
 
-        sessionManager = new SessionManager(redisManager, buildProxyId());
+        sessionManager = new ProxyPlayerSessionManager(redisManager, buildProxyId());
 
         proxy.getChannelRegistrar().register(
                 MinecraftChannelIdentifier.create("goliath", "location")
@@ -164,10 +164,6 @@ public class Goliath {
 
         ch.mcserver.goliath.pluginmessenger.CreativeMessenger creativeMessenger = new ch.mcserver.goliath.pluginmessenger.CreativeMessenger(proxy);
 
-        proxy.getEventManager().register(
-                this,
-                new ProxyPlayerManager()
-        );
 
         proxy.getEventManager().register(
                 this,
@@ -201,7 +197,7 @@ public class Goliath {
 
         proxy.getEventManager().register(
                 this,
-                new AnticheatListener(
+                new ProxyPlayerConnectionListener(
                       sessionManager
                 )
         );
@@ -455,7 +451,7 @@ public class Goliath {
         String proxyName = Goliath.proxyName;
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-            byte[] proxyId = messageDigest.digest(proxyName.getBytes());
+            byte[] proxyId = messageDigest.digest(proxyName.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(proxyId).substring(0, 11);
         } catch (NoSuchAlgorithmException e) {
             Goliath.getInstance().getLogger().info("Failed to get the MessageDigest algorithm. Exception: " + e.toString());
@@ -517,7 +513,7 @@ public class Goliath {
         return goliathTeleportMessenger;
     }
 
-    public SessionManager getSessionManager() {
+    public ProxyPlayerSessionManager getSessionManager() {
         return sessionManager;
     }
 
