@@ -89,8 +89,6 @@ public class ProxyPlayerManager {
         }
 
         playerObject.setSfmode(false);
-        playerObject.setGmsp(false);
-
         try {
             Goliath.playerRepository.savePlayerDataOnly(playerObject);
         } catch (Exception e) {
