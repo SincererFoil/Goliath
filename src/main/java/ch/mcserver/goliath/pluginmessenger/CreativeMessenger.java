@@ -71,8 +71,14 @@ public class CreativeMessenger {
 
             if (playerObject == null) return;
 
+
+            if (enabled) {
+                playerObject.setGmsp(false);
+            }
+
             playerObject.setCreative(enabled);
             playerRepository.savePlayerDataOnly(playerObject);
+
 
         } catch (RuntimeException exception) {
             Goliath.LOGGER.warn(

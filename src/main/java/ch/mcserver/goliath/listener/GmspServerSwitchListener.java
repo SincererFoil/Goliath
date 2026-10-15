@@ -46,14 +46,18 @@ public class GmspServerSwitchListener {
                         return;
                     }
 
-                    gmspMessenger.sendGmsp(
-                            player,
-                            playerObject.isGmsp()
-                    );
 
-                    if (playerObject.isCreative()) {
+
+
+                    if (playerObject.isGmsp()) {
+                        gmspMessenger.sendGmsp(player, true);
+                    } else if (playerObject.isCreative()) {
                         creativeMessenger.sendCreative(player, true);
+                    } else {
+                        gmspMessenger.sendGmsp(player, false);
                     }
+
+
                 })
                 .delay(500, TimeUnit.MILLISECONDS)
                 .schedule();
