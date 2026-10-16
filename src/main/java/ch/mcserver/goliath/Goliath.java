@@ -10,6 +10,7 @@ import ch.mcserver.goliath.command.staff.GmspCommand;
 import ch.mcserver.goliath.command.staff.SfModeCommand;
 import ch.mcserver.goliath.command.utility.FindPlayerCommand;
 import ch.mcserver.goliath.command.utility.WhereAmICommand;
+import ch.mcserver.goliath.common.network.ServerHeartbeatService;
 import ch.mcserver.goliath.database.mongodb.MongoDBManager;
 import ch.mcserver.goliath.database.mongodb.repository.AnticheatPunishRepository;
 import ch.mcserver.goliath.database.mongodb.repository.HistoryEventRepository;
@@ -89,6 +90,8 @@ public class Goliath {
     public static PlayerLocationRepository playerLocationRepository;
     public static PlayerIpRepository playerIpRepository;
 
+    private ServerHeartbeatService serverHeartbeatService;
+
     public static ConfigurationNode config;
     public static final Logger LOGGER = LoggerFactory.getLogger(Goliath.class);
     public static String proxyName;
@@ -144,6 +147,9 @@ public class Goliath {
         commandUpdateMessenger = new CommandUpdateMessenger(proxy);
 
         sessionManager = new ProxyPlayerSessionManager(redisManager, buildProxyId());
+
+        serverHeartbeatService = new ServerHeartbeatService(proxy, this, redisManager);
+        serverHeartbeatService.start();
 
         proxy.getChannelRegistrar().register(
                 MinecraftChannelIdentifier.create("goliath", "location")
