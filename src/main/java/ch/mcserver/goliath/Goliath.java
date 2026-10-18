@@ -11,6 +11,7 @@ import ch.mcserver.goliath.command.staff.SfModeCommand;
 import ch.mcserver.goliath.command.utility.FindPlayerCommand;
 import ch.mcserver.goliath.command.utility.WhereAmICommand;
 import ch.mcserver.goliath.common.network.ServerHeartbeatService;
+import ch.mcserver.goliath.common.network.ServerStatus;
 import ch.mcserver.goliath.database.mongodb.MongoDBManager;
 import ch.mcserver.goliath.database.mongodb.repository.AnticheatPunishRepository;
 import ch.mcserver.goliath.database.mongodb.repository.HistoryEventRepository;
@@ -149,6 +150,7 @@ public class Goliath {
         sessionManager = new ProxyPlayerSessionManager(redisManager, buildProxyId());
 
         serverHeartbeatService = new ServerHeartbeatService(proxy, this, redisManager);
+        serverHeartbeatService.setStatus(ServerStatus.STARTING);
         serverHeartbeatService.start();
 
         proxy.getChannelRegistrar().register(
@@ -366,15 +368,13 @@ public class Goliath {
         );
 
         logger.info("Goliath Core enabled.");
+        serverHeartbeatService.setStatus(ServerStatus.ONLINE);
     }
 
     private void initializeAltDetection() {
-        String ipHashSecret = config
-                .node("alts", "ip-hash-secret")
-                .getString();
+        String ipHashSecret = config.node("alts", "ip-hash-secret").getString();
 
-        Path geoIpDatabase =
-                dataDirectory.resolve("GeoLite2-City.mmdb");
+        Path geoIpDatabase = dataDirectory.resolve("GeoLite2-City.mmdb");
 
         if (ipHashSecret == null || ipHashSecret.isBlank()) {
             logger.error(
@@ -467,6 +467,7 @@ public class Goliath {
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
+        serverHeartbeatService.setStatus(ServerStatus.STOPPING);
         if (geoIpService != null) {
             try {
                 geoIpService.close();
@@ -489,6 +490,8 @@ public class Goliath {
         instance = null;
 
         logger.info("Goliath Core disabled.");
+        serverHeartbeatService.setStatus(ServerStatus.OFFLINE);
+        serverHeartbeatService.stop();
     }
 
     public static Goliath getInstance() {

@@ -5,6 +5,7 @@ import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.redis.RedisManager;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.scheduler.ScheduledTask;
 import redis.clients.jedis.Jedis;
 
 import java.sql.Timestamp;
@@ -25,6 +26,10 @@ public class ServerHeartbeatService {
 
     private final RedisManager redisManager;
 
+    private ScheduledTask task;
+
+    private volatile ServerStatus status = ServerStatus.STARTING;
+
     public ServerHeartbeatService(ProxyServer proxy, Goliath  plugin, RedisManager redisManager) {
         this.proxy = proxy;
         this.plugin = plugin;
@@ -32,8 +37,18 @@ public class ServerHeartbeatService {
     }
 
     public void start() {
-        proxy.getScheduler().buildTask(plugin, this::sendHeartbeat)
+        task = proxy.getScheduler().buildTask(plugin, this::sendHeartbeat)
                 .repeat(5, TimeUnit.SECONDS).schedule();
+    }
+
+    public void stop() {
+        if (this.task != null) {
+            this.task.cancel();
+        }
+    }
+
+    public void setStatus(ServerStatus status) {
+        this.status = status;
     }
 
     public void sendHeartbeat() {
@@ -42,7 +57,7 @@ public class ServerHeartbeatService {
             jedis.hset(HEARTBEAT_KEY_PREFIX + proxyName, Map.of(
                     "instance_id", instanceId,
                     "players", String.valueOf(proxy.getPlayerCount()),
-                    "status", "ONLINE",
+                    "status", status.toString(),
                     "timestamp", String.valueOf(System.currentTimeMillis())
             ));
 
