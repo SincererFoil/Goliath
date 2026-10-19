@@ -14,13 +14,6 @@ public class HistroyLogTypes {
 
 
 
-
-    /**
-     * Constructor to initialize Objects
-     * @param proxy the proxy obejct
-     * @param messenger the RequestMessenger object.
-     * @param repository the HistoryRepository used to create a new History Log
-     */
     public HistroyLogTypes(ProxyServer proxy, SnapshotRequestManager messenger, HistoryEventRepository repository) {
         this.proxy = proxy;
         this.messenger = messenger;
@@ -53,14 +46,6 @@ public class HistroyLogTypes {
     }
 
 
-
-    /**
-     * History Log Event Join Server
-     * gets executed when a player is joining the server.
-     *
-     * @param playerUuid the player's uuid
-     * @param server
-     */
     public void JoinHistory(UUID playerUuid, RegisteredServer server) {
         String serverName = server.getServerInfo().getName();
         // Saves the name of the current server

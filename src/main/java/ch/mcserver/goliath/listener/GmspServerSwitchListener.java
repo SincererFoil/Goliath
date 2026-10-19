@@ -28,27 +28,39 @@ public class GmspServerSwitchListener {
 
     @Subscribe
     public void onServerSwitch(ServerConnectedEvent event) {
-
         Player player = event.getPlayer();
+        var destination = event.getServer();
 
-        ProxyPlayerObject proxyPlayerObject = getPlayer(player.getUniqueId());
+        proxy.getScheduler()
+                .buildTask(plugin, () -> {
+                    if (player.getCurrentServer().isEmpty()
+                            || !player.getCurrentServer().get()
+                            .getServer().equals(destination)) {
+                        return;
+                    }
 
-        if (proxyPlayerObject == null) {
-            return;
-        }
+                    ProxyPlayerObject playerObject =
+                            getPlayer(player.getUniqueId());
 
-        if (proxyPlayerObject.isGmsp()) {
-            proxy.getScheduler()
-                    .buildTask(plugin, () -> gmspMessenger.sendGmsp(player, true))
-                    .delay(500, TimeUnit.MILLISECONDS)
-                    .schedule();
-        }
+                    if (playerObject == null) {
+                        return;
+                    }
 
-        if (proxyPlayerObject.isCreative()) {
-            proxy.getScheduler()
-                    .buildTask(plugin, () -> creativeMessenger.sendCreative(player, true))
-                    .delay(500, TimeUnit.MILLISECONDS)
-                    .schedule();
-        }
+
+
+
+                    if (playerObject.isGmsp()) {
+                        gmspMessenger.sendGmsp(player, true);
+                    } else if (playerObject.isCreative()) {
+                        creativeMessenger.sendCreative(player, true);
+                    } else {
+                        gmspMessenger.sendGmsp(player, false);
+                    }
+
+
+                })
+                .delay(500, TimeUnit.MILLISECONDS)
+                .schedule();
     }
+
 }

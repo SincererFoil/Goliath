@@ -51,16 +51,18 @@ public class GmspCommand implements SimpleCommand {
             return;
         }
 
-        if (playerObject.isGmsp()){
+
+        if (playerObject.isGmsp()) {
             playerObject.setGmsp(false);
             messenger.sendGmsp(player, false);
-            playerRepository.save(playerObject);
-
         } else {
+            playerObject.setCreative(false);
             playerObject.setGmsp(true);
             messenger.sendGmsp(player, true);
-            playerRepository.save(playerObject);
         }
+
+        playerRepository.save(playerObject);
+
 
     }
 

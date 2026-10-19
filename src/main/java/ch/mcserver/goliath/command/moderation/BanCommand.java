@@ -196,7 +196,7 @@ public class BanCommand implements SimpleCommand {
                             ))
                             .appendNewline()
                             .append(Component.text(
-                                    "discord.gg/donutsmp",
+                                    "discord.gg/mcserver",
                                     NamedTextColor.WHITE
                             ))
             );
