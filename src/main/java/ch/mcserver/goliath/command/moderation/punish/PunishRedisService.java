@@ -185,8 +185,10 @@ public class PunishRedisService {
 
         String formattedDate = Instant.ofEpochMilli(event.issuedAt()).atZone(ZoneId.of("Europe/Zurich")).format(formatter);
 
+        Component banMessage = event.reason().contains("&") ? LegacyComponentSerializer.legacyAmpersand().deserialize(event.reason()) : Component.text(event.reason(), NamedTextColor.RED);
+
         target.disconnect(
-                Component.text(event.reason(), NamedTextColor.RED)
+                banMessage
                         .appendNewline()
                         .appendSpace()
                         .appendNewline()
@@ -197,6 +199,8 @@ public class PunishRedisService {
                         .appendNewline()
                         .append(Component.text("Ban ID: ", NamedTextColor.GRAY))
                         .append(Component.text(event.banId(), NamedTextColor.WHITE))
+                        .appendNewline()
+                        .appendSpace()
                         .appendNewline()
                         .append(Component.text("You may be able to appeal this ban on", NamedTextColor.GRAY))
                         .appendNewline()
