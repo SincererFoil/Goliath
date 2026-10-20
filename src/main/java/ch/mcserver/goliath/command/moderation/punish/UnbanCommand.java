@@ -1,4 +1,4 @@
-package ch.mcserver.goliath.command.moderation;
+package ch.mcserver.goliath.command.moderation.punish;
 
 import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;

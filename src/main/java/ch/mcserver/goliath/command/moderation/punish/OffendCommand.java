@@ -1,4 +1,4 @@
-package ch.mcserver.goliath.command.moderation;
+package ch.mcserver.goliath.command.moderation.punish;
 
 import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
@@ -150,7 +150,10 @@ public class OffendCommand implements SimpleCommand {
                 .orElse(null);
 
         ZonedDateTime createdAt = ZonedDateTime.now(ZoneId.of("Europe/Zurich"));
+
         ZonedDateTime expiresAt = isPermanent ? null : createdAt.plusSeconds(banTime / 1000);
+
+        String banId = BanIdGenerator.generateBanId();
 
         PlayerPunishment punishment = new PlayerPunishment(
                 offendCount,
@@ -161,7 +164,7 @@ public class OffendCommand implements SimpleCommand {
                 expiresAt,
                 isWiped,
                 staffNote,
-                BanIdGenerator.generateBanId(),
+                banId,
                 isPermanent,
                 true
         );
@@ -190,70 +193,23 @@ public class OffendCommand implements SimpleCommand {
             );
         }
 
-        Component chatBanText = banText.contains("&")
-                ? LegacyComponentSerializer.legacyAmpersand().deserialize(banText)
-                : Component.text(banText, NamedTextColor.WHITE);
+        Component chatBanText = banText.contains("&") ? LegacyComponentSerializer.legacyAmpersand().deserialize(banText) : Component.text(banText, NamedTextColor.WHITE);
 
         invocation.source().sendMessage(chatBanText);
 
         Optional<Player> targetPlayer = proxy.getPlayer(targetObject.getUuid());
 
-        if (targetPlayer.isPresent()) {
-            Player target = targetPlayer.get();
+        PunishEvent event = new PunishEvent(
+                targetObject.getUuid(),
+                banText,
+                staffName,
+                banId,
+                expiresAt == null ? null : expiresAt.toInstant().toEpochMilli(),
+                createdAt.toInstant().toEpochMilli()
+        );
 
-            Component banMessage = banText.contains("&")
-                    ? LegacyComponentSerializer.legacyAmpersand().deserialize(banText)
-                    : Component.text(banText, NamedTextColor.RED);
+        Goliath.getInstance().getPunishRedisService().publish(event);
 
-            if (isPermanent) {
-                target.disconnect(
-                        banMessage
-                                .appendNewline()
-                                .appendNewline()
-                                .append(Component.text("Date: ", NamedTextColor.GRAY))
-                                .append(Component.text(createdAt.format(DATE_FORMATTER), NamedTextColor.WHITE))
-                                .appendNewline()
-                                .appendNewline()
-                                .append(Component.text("Ban ID: ", NamedTextColor.GRAY))
-                                .append(Component.text(punishment.getBanId(), NamedTextColor.WHITE))
-                                .appendNewline()
-                                .appendNewline()
-                                .append(Component.text("You may be able to appeal this ban on", NamedTextColor.GRAY))
-                                .appendNewline()
-                                .append(Component.text("discord.gg/mcserver", NamedTextColor.WHITE))
-                );
-                return;
-            }
-
-            Duration remaining = Duration.between(
-                    ZonedDateTime.now(ZoneId.of("Europe/Zurich")),
-                    expiresAt
-            );
-
-            long totalMinutes = Math.max(0, remaining.toMinutes());
-            long days = totalMinutes / (24 * 60);
-            long hours = (totalMinutes % (24 * 60)) / 60;
-            long minutes = totalMinutes % 60;
-
-            String formatted = days + " Days " + hours + " Hours " + minutes + " Minutes";
-
-            target.disconnect(
-                    banMessage
-                            .appendNewline()
-                            .appendNewline()
-                            .append(Component.text("Time Left: ", NamedTextColor.GRAY))
-                            .append(Component.text(formatted, NamedTextColor.WHITE))
-                            .appendNewline()
-                            .appendNewline()
-                            .append(Component.text("Ban ID: ", NamedTextColor.GRAY))
-                            .append(Component.text(punishment.getBanId(), NamedTextColor.WHITE))
-                            .appendNewline()
-                            .appendNewline()
-                            .append(Component.text("You may be able to appeal this ban on", NamedTextColor.GRAY))
-                            .appendNewline()
-                            .append(Component.text("discord.gg/mcserver", NamedTextColor.WHITE))
-            );
-        }
     }
 
     private String checkOffendSource(Invocation invocation) {

@@ -6,6 +6,7 @@ import ch.mcserver.goliath.anticheat.command.GuardCommand;
 import ch.mcserver.goliath.command.admin.GiveMediaCommand;
 import ch.mcserver.goliath.command.admin.GoliathCommand;
 import ch.mcserver.goliath.command.moderation.*;
+import ch.mcserver.goliath.command.moderation.punish.*;
 import ch.mcserver.goliath.command.staff.GmspCommand;
 import ch.mcserver.goliath.command.staff.SfModeCommand;
 import ch.mcserver.goliath.command.utility.FindPlayerCommand;
@@ -25,7 +26,6 @@ import ch.mcserver.goliath.history.HistroyLogTypes;
 import ch.mcserver.goliath.history.SnapshotRequestManager;
 import ch.mcserver.goliath.listener.*;
 import ch.mcserver.goliath.player.ProxyPlayerConnectionListener;
-import ch.mcserver.goliath.player.ProxyPlayerManager;
 import ch.mcserver.goliath.player.alts.GeoIpService;
 import ch.mcserver.goliath.player.alts.IpHasher;
 import ch.mcserver.goliath.player.location.JoinController;
@@ -78,6 +78,8 @@ public class Goliath {
     private RedisManager redisManager;
     private AnticheatFlagSubscriber anticheatFlagSubscriber;
     private GeoIpService geoIpService;
+
+    private PunishRedisService punishRedisService;
 
     public static final Map<UUID, Float> flySpeeds = new HashMap<>();
 
@@ -152,7 +154,8 @@ public class Goliath {
         serverHeartbeatService = new ServerHeartbeatService(proxy, this, redisManager);
         serverHeartbeatService.setStatus(ServerStatus.STARTING);
         serverHeartbeatService.start();
-
+        punishRedisService = new PunishRedisService(proxy, redisManager);
+        punishRedisService.start();
         proxy.getChannelRegistrar().register(
                 MinecraftChannelIdentifier.create("goliath", "location")
         );
@@ -467,6 +470,7 @@ public class Goliath {
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
+        punishRedisService.stop();
         serverHeartbeatService.setStatus(ServerStatus.STOPPING);
         if (geoIpService != null) {
             try {
@@ -524,6 +528,10 @@ public class Goliath {
 
     public ProxyPlayerSessionManager getSessionManager() {
         return sessionManager;
+    }
+
+    public PunishRedisService getPunishRedisService() {
+        return punishRedisService;
     }
 
 }

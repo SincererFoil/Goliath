@@ -1,4 +1,4 @@
-package ch.mcserver.goliath.command.moderation;
+package ch.mcserver.goliath.command.moderation.punish;
 
 import ch.mcserver.goliath.Goliath;
 import ch.mcserver.goliath.database.mysql.repository.PlayerRepository;
@@ -13,6 +13,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -97,19 +98,12 @@ public class BanCommand implements SimpleCommand {
             staffName = player.getUsername();
         }
 
-        /*
-         * If the target is online, save the current IP address.
-         * If the target is offline, no current connection exists,
-         * so the punishment is still created without an IP address.
-         */
         String ipAddress = proxy.getPlayer(targetObject.getUuid())
-                .map(player -> player.getRemoteAddress()
-                        .getAddress()
-                        .getHostAddress())
+                .map(player -> player.getRemoteAddress().getAddress().getHostAddress())
                 .orElse(null);
 
-        ZonedDateTime date =
-                ZonedDateTime.now(ZoneId.of("Europe/Zurich"));
+        ZonedDateTime date = ZonedDateTime.now(ZoneId.of("Europe/Zurich"));
+        String banId = BanIdGenerator.generateBanId();
 
         PlayerPunishment punishment = new PlayerPunishment(
                 0,
@@ -120,35 +114,26 @@ public class BanCommand implements SimpleCommand {
                 null,
                 true,
                 note,
-                BanIdGenerator.generateBanId(),
+                banId,
                 true,
                 true
         );
+
+        if (targetObject.getPunishments() == null) {
+            targetObject.setPunishments(new ArrayList<>());
+        }
 
         targetObject.getPunishments().add(punishment);
 
         playerRepository.save(targetObject);
 
-        invocation.source().sendMessage(
-                Component.text(
-                        "Punishment executed with success.",
-                        NamedTextColor.RED
-                )
-        );
+        invocation.source().sendMessage(Component.text("Punishment executed with success.", NamedTextColor.RED));
 
         invocation.source().sendMessage(
                 Component.text(
-                                "Permanently banned player ",
-                                NamedTextColor.RED
-                        )
-                        .append(Component.text(
-                                targetObject.getName(),
-                                NamedTextColor.WHITE
-                        ))
-                        .append(Component.text(
-                                " with reason:",
-                                NamedTextColor.RED
-                        ))
+                        "Permanently banned player ", NamedTextColor.RED)
+                        .append(Component.text(targetObject.getName(), NamedTextColor.WHITE))
+                        .append(Component.text(" with reason:", NamedTextColor.RED))
         );
 
         invocation.source().sendMessage(
@@ -158,49 +143,18 @@ public class BanCommand implements SimpleCommand {
                 )
         );
 
-        Optional<Player> targetPlayer =
-                proxy.getPlayer(targetObject.getUuid());
+        Optional<Player> targetPlayer = proxy.getPlayer(targetObject.getUuid());
 
-        if (targetPlayer.isPresent()) {
+        PunishEvent event = new PunishEvent(
+                targetObject.getUuid(),
+                reason,
+                staffName,
+                banId,
+                null,
+                date.toInstant().toEpochMilli()
+        );
 
-            Player target = targetPlayer.get();
-
-            target.disconnect(
-                    Component.text(reason, NamedTextColor.RED)
-                            .appendNewline()
-                            .appendSpace()
-                            .appendNewline()
-                            .append(Component.text(
-                                    "Date: ",
-                                    NamedTextColor.GRAY
-                            ))
-                            .append(Component.text(
-                                    date.format(formatter),
-                                    NamedTextColor.WHITE
-                            ))
-                            .appendNewline()
-                            .appendSpace()
-                            .appendNewline()
-                            .append(Component.text(
-                                    "Ban ID: ",
-                                    NamedTextColor.GRAY
-                            ))
-                            .append(Component.text(
-                                    punishment.getBanId(),
-                                    NamedTextColor.WHITE
-                            ))
-                            .appendNewline()
-                            .append(Component.text(
-                                    "You may be able to appeal this ban on",
-                                    NamedTextColor.GRAY
-                            ))
-                            .appendNewline()
-                            .append(Component.text(
-                                    "discord.gg/mcserver",
-                                    NamedTextColor.WHITE
-                            ))
-            );
-        }
+        Goliath.getInstance().getPunishRedisService().publish(event);
     }
 
     @Override

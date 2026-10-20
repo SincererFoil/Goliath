@@ -1,4 +1,4 @@
-package ch.mcserver.goliath.command.moderation;
+package ch.mcserver.goliath.command.moderation.punish;
 
 import java.security.SecureRandom;
 
