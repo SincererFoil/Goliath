@@ -77,7 +77,10 @@ public class AltsCommand implements SimpleCommand {
                 return punishment.getExpiresAt() != null && punishment.getExpiresAt().isAfter(now);
             });
 
-            boolean online = proxy.getPlayer(linkedAccount.uuid()).isPresent();
+            String playerName = linkedAccountObject.getName();
+
+            boolean online = Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
+                    .anyMatch(name -> name.equalsIgnoreCase(playerName));
 
             if (banned) {
                 linkedAccountColorList.put(linkedAccountObject.getName(), NamedTextColor.RED);

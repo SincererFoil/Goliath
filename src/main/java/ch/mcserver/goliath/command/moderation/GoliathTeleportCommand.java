@@ -139,19 +139,13 @@ public class GoliathTeleportCommand implements SimpleCommand {
     public List<String> suggest(Invocation invocation) {
 
         if (invocation.arguments().length == 0) {
-            return proxy.getAllPlayers()
-                    .stream()
-                    .map(Player::getUsername)
-                    .toList();
+            return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream().toList();
         }
 
         String input = invocation.arguments()[0].toLowerCase();
 
-        return proxy.getAllPlayers()
-                .stream()
-                .map(Player::getUsername)
-                .filter(name -> name.toLowerCase().startsWith(input))
-                .toList();
+        return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
+                .filter(name -> ((String) name).toLowerCase().startsWith(input)).toList();
     }
 
     @Override
