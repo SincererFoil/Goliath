@@ -1,5 +1,6 @@
 package ch.mcserver.goliath.command.utility;
 
+import ch.mcserver.goliath.Goliath;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -36,7 +37,7 @@ public class FindPlayerCommand implements SimpleCommand {
         }
         Player target = optionalPlayer.get();
 
-        if (!target.getCurrentServer().isPresent()) {
+        if (target.getCurrentServer().isEmpty()) {
             return;
         }
 
@@ -77,19 +78,14 @@ public class FindPlayerCommand implements SimpleCommand {
     public List<String> suggest(Invocation invocation) {
 
         if (invocation.arguments().length == 0) {
-            return proxy.getAllPlayers()
-                    .stream()
-                    .map(Player::getUsername)
+            return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
                     .toList();
         }
 
         String input = invocation.arguments()[0].toLowerCase();
 
-        return proxy.getAllPlayers()
-                .stream()
-                .map(Player::getUsername)
-                .filter(name -> name.toLowerCase().startsWith(input))
-                .toList();
+        return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
+                .filter(name -> ((String) name).toLowerCase().startsWith(input)).toList();
     }
 
 }

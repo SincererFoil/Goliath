@@ -418,18 +418,15 @@ public class OffendCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length == 0) {
-            return proxy.getAllPlayers().stream()
-                    .map(Player::getUsername)
+            return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
                     .toList();
         }
 
         if (args.length == 1) {
             String input = args[0].toLowerCase();
 
-            return proxy.getAllPlayers().stream()
-                    .map(Player::getUsername)
-                    .filter(name -> name.toLowerCase().startsWith(input))
-                    .toList();
+            return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
+                    .filter(name -> ((String) name).toLowerCase().startsWith(input)).toList();
         }
 
         if (args.length == 2) {

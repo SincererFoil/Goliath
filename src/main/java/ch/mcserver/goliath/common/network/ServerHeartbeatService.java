@@ -20,6 +20,7 @@ public class ServerHeartbeatService {
     private final ProxyServer proxy;
 
     private static final String HEARTBEAT_KEY_PREFIX = "goliath:network:heartbeat:proxy:";
+
     private final Goliath  plugin;
 
     private final String instanceId = UUID.randomUUID().toString().substring(0, 8);

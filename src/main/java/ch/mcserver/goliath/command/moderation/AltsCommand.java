@@ -157,7 +157,8 @@ public class AltsCommand implements SimpleCommand {
         if (args.length <= 1) {
             String input = args.length == 0 ? "" : args[0].toLowerCase();
 
-            return proxy.getAllPlayers().stream().map(Player::getUsername).filter(name -> name.toLowerCase().startsWith(input)).toList();
+            return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
+                    .filter(name -> ((String) name).toLowerCase().startsWith(input)).toList();
         }
 
         return List.of();

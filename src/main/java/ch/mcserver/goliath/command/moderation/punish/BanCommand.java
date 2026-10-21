@@ -163,9 +163,8 @@ public class BanCommand implements SimpleCommand {
         String[] args = invocation.arguments();
 
         if (args.length == 0) {
-            return proxy.getAllPlayers()
+            return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames()
                     .stream()
-                    .map(Player::getUsername)
                     .toList();
         }
 
@@ -173,13 +172,9 @@ public class BanCommand implements SimpleCommand {
 
             String input = args[0].toLowerCase();
 
-            return proxy.getAllPlayers()
-                    .stream()
-                    .map(Player::getUsername)
-                    .filter(name ->
-                            name.toLowerCase().startsWith(input)
-                    )
-                    .toList();
+            return Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
+                    .filter(name -> ((String) name).toLowerCase().startsWith(input)).toList();
+
         }
 
         return List.of();

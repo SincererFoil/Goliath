@@ -11,6 +11,7 @@ import ch.mcserver.goliath.command.staff.GmspCommand;
 import ch.mcserver.goliath.command.staff.SfModeCommand;
 import ch.mcserver.goliath.command.utility.FindPlayerCommand;
 import ch.mcserver.goliath.command.utility.WhereAmICommand;
+import ch.mcserver.goliath.common.network.NetworkPlayerRegistryService;
 import ch.mcserver.goliath.common.network.ServerHeartbeatService;
 import ch.mcserver.goliath.common.network.ServerStatus;
 import ch.mcserver.goliath.database.mongodb.MongoDBManager;
@@ -80,6 +81,8 @@ public class Goliath {
     private GeoIpService geoIpService;
 
     private PunishRedisService punishRedisService;
+
+    private NetworkPlayerRegistryService networkPlayerRegistryService;
 
     public static final Map<UUID, Float> flySpeeds = new HashMap<>();
 
@@ -160,8 +163,7 @@ public class Goliath {
                 MinecraftChannelIdentifier.create("goliath", "location")
         );
 
-        SnapshotRequestManager snapshotRequestManager =
-                new SnapshotRequestManager(proxy);
+        SnapshotRequestManager snapshotRequestManager = new SnapshotRequestManager(proxy);
 
         HistoryEventRepository historyRepository = new HistoryEventRepository(mongoDBManager.getCollection("history_events"));
         AnticheatPunishRepository anticheatPunishRepository = new AnticheatPunishRepository(mongoDBManager.getCollection("anticheat_punishments"), proxyName);
@@ -170,6 +172,8 @@ public class Goliath {
         anticheatFlagSubscriber = new AnticheatFlagSubscriber(redisManager, proxy, anticheatPunishRepository);
 
         anticheatFlagSubscriber.start();
+        networkPlayerRegistryService = new NetworkPlayerRegistryService(proxy, this, redisManager);
+        networkPlayerRegistryService.start();
 
         GmspMessenger gmspMessenger = new GmspMessenger(proxy);
 
@@ -471,6 +475,7 @@ public class Goliath {
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         punishRedisService.stop();
+        networkPlayerRegistryService.stop();
         serverHeartbeatService.setStatus(ServerStatus.STOPPING);
         if (geoIpService != null) {
             try {
@@ -532,6 +537,10 @@ public class Goliath {
 
     public PunishRedisService getPunishRedisService() {
         return punishRedisService;
+    }
+
+    public NetworkPlayerRegistryService getNetworkPlayerRegistry() {
+        return networkPlayerRegistryService;
     }
 
 }
