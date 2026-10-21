@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -82,6 +83,9 @@ public class AltsCommand implements SimpleCommand {
             boolean online = Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
                     .anyMatch(name -> name.equalsIgnoreCase(playerName));
 
+
+
+
             if (banned) {
                 linkedAccountColorList.put(linkedAccountObject.getName(), NamedTextColor.RED);
             } else if (online) {
@@ -91,17 +95,10 @@ public class AltsCommand implements SimpleCommand {
             }
         });
 
-        Component message = Component.text("Alts for ", NamedTextColor.WHITE)
-                .append(Component.text(player.getName() + ". ", NamedTextColor.GRAY))
-                .append(Component.text("[", NamedTextColor.WHITE))
-                .append(Component.text("Offline", NamedTextColor.GRAY))
-                .append(Component.text("] ", NamedTextColor.WHITE))
-                .append(Component.text("[", NamedTextColor.WHITE))
-                .append(Component.text("Online", NamedTextColor.GREEN))
-                .append(Component.text("] ", NamedTextColor.WHITE))
-                .append(Component.text("[", NamedTextColor.WHITE))
-                .append(Component.text("Banned", NamedTextColor.RED))
-                .append(Component.text("] ", NamedTextColor.WHITE));
+        boolean playerOnline = Goliath.getInstance().getNetworkPlayerRegistry().getOnlinePlayerNames().stream()
+                .anyMatch(name -> name.equalsIgnoreCase(player.getName()));
+
+        Component message = getComponent(playerOnline, player);
 
         for (int i = 0; i < linkedAccounts.size(); i++) {
             LinkedAccount linkedAccount = linkedAccounts.get(i);
@@ -140,6 +137,23 @@ public class AltsCommand implements SimpleCommand {
         }
 
         invocation.source().sendMessage(message);;
+    }
+
+    private static @NonNull Component getComponent(boolean playerOnline, ProxyPlayerObject player) {
+        NamedTextColor playerColor = playerOnline ? NamedTextColor.GREEN : NamedTextColor.GRAY;
+
+        Component message = Component.text("Alts for ", NamedTextColor.WHITE)
+                .append(Component.text(player.getName() + ". ", playerColor))
+                .append(Component.text("[", NamedTextColor.WHITE))
+                .append(Component.text("Offline", NamedTextColor.GRAY))
+                .append(Component.text("] ", NamedTextColor.WHITE))
+                .append(Component.text("[", NamedTextColor.WHITE))
+                .append(Component.text("Online", NamedTextColor.GREEN))
+                .append(Component.text("] ", NamedTextColor.WHITE))
+                .append(Component.text("[", NamedTextColor.WHITE))
+                .append(Component.text("Banned", NamedTextColor.RED))
+                .append(Component.text("] ", NamedTextColor.WHITE));
+        return message;
     }
 
     private String formatLinkedDuration(Duration duration) {
