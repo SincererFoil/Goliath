@@ -94,7 +94,7 @@ public class OffendCommand implements SimpleCommand {
 
         long banRawTime = durations.get(rawReason);
         boolean isWiped = wipes.getOrDefault(rawReason, false);
-        boolean isPermanent = Set.of("autopunish", "make-a-ticket", "botting", "anticheat", "alt-limit").contains(rawReason);
+        boolean isPermanent = Set.of("autopunish", "make-a-ticket", "botting", "anticheat", "alt-limit", "ratting", "account-compromised").contains(rawReason);
         String banText = punishmentText.get(rawReason);
 
         if (banText == null) {
@@ -315,7 +315,8 @@ public class OffendCommand implements SimpleCommand {
         put("invite-rewards-ownership", "You are temporarily banned for invite rewards ownership.");
 
         put("radar/minimap", "You are temporarily banned for using radar or minimap modifications.");
-        put("ratting", "You are temporarily banned for ratting.");
+        put("ratting", "&c Your account appears to have been compromised.\n It may have been used for malicious or suspicious activity. Your account has been permanently banned for security reasons.\n \n &c If you would like to play on Mcserver SMP again, &c please create a new Minecraft account.");
+        put("account-compromised", "&c Your account was compromised and was involved in using malicious methods to access or exploit other accounts.\n \n &c As long as you are banned on another account, you may create another account if you wish to play on SMP again.");
 
         put("soundboard-proximity", "You are temporarily muted for soundboard abuse in proximity chat.");
         put("spam-chat", "You are temporarily muted for spamming chat.");
