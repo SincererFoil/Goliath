@@ -163,6 +163,7 @@ public class Goliath {
         punishRedisService = new PunishRedisService(proxy, redisManager);
         sectorTransferService = new SectorTransferService(proxy, redisManager);
         punishRedisService.start();
+        sectorTransferService.start();
         proxy.getChannelRegistrar().register(
                 MinecraftChannelIdentifier.create("goliath", "location")
         );
@@ -478,6 +479,7 @@ public class Goliath {
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         punishRedisService.stop();
+        sectorTransferService.stop();
         networkPlayerRegistryService.stop();
         serverHeartbeatService.setStatus(ServerStatus.STOPPING);
         if (geoIpService != null) {
