@@ -34,6 +34,7 @@ import ch.mcserver.goliath.player.session.ProxyPlayerSessionManager;
 import ch.mcserver.goliath.pluginmessenger.CommandUpdateMessenger;
 import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import ch.mcserver.goliath.pluginmessenger.GoliathTeleportMessenger;
+import ch.mcserver.goliath.sector.SectorTransferService;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -98,6 +99,8 @@ public class Goliath {
 
     private ServerHeartbeatService serverHeartbeatService;
 
+    private SectorTransferService sectorTransferService;
+
     public static ConfigurationNode config;
     public static final Logger LOGGER = LoggerFactory.getLogger(Goliath.class);
     public static String proxyName;
@@ -158,7 +161,9 @@ public class Goliath {
         serverHeartbeatService.setStatus(ServerStatus.STARTING);
         serverHeartbeatService.start();
         punishRedisService = new PunishRedisService(proxy, redisManager);
+        sectorTransferService = new SectorTransferService(proxy, redisManager);
         punishRedisService.start();
+        sectorTransferService.start();
         proxy.getChannelRegistrar().register(
                 MinecraftChannelIdentifier.create("goliath", "location")
         );
@@ -425,8 +430,7 @@ public class Goliath {
         try {
             Files.createDirectories(dataDirectory);
 
-            Path configPath =
-                    dataDirectory.resolve("config.yml");
+            Path configPath = dataDirectory.resolve("config.yml");
 
             if (!Files.exists(configPath)) {
                 try (InputStream inputStream =
@@ -475,6 +479,7 @@ public class Goliath {
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         punishRedisService.stop();
+        sectorTransferService.stop();
         networkPlayerRegistryService.stop();
         serverHeartbeatService.setStatus(ServerStatus.STOPPING);
         if (geoIpService != null) {
