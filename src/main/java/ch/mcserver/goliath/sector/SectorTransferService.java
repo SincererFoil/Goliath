@@ -1,6 +1,6 @@
+
 package ch.mcserver.goliath.sector;
 
-import ch.mcserver.goliath.command.moderation.punish.PunishEvent;
 import ch.mcserver.goliath.database.redis.RedisManager;
 import com.google.gson.Gson;
 import com.velocitypowered.api.proxy.Player;
@@ -9,6 +9,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,11 +18,20 @@ public class SectorTransferService {
 
     private static final String CHANNEL = "goliath:sector:transfer:request";
 
+    private static final String PENDING_PREFIX = "goliath:sector:transfer:pending:";
+
+    private static final String DELETE_IF_MATCHES = """
+            if redis.call('GET', KEYS[1]) == ARGV[1] then
+                return redis.call('DEL', KEYS[1])
+            end
+            return 0
+            """;
+
     private final RedisManager redisManager;
 
     private final ProxyServer proxy;
 
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -33,23 +43,27 @@ public class SectorTransferService {
 
     private volatile JedisPubSub activeSubscriber;
 
+
     public SectorTransferService(ProxyServer proxy, RedisManager redisManager) {
         this.redisManager = redisManager;
         this.proxy = proxy;
     }
 
+
     public void start() {
-        if (running) {
-            return;
-        }
+        if (running) return;
+
         running = true;
+
         executor.submit(this::subscribeLoop);
     }
+
 
     public void stop() {
         running = false;
 
         JedisPubSub subscriber = activeSubscriber;
+
         if (subscriber != null) {
             subscriber.unsubscribe();
         }
@@ -64,6 +78,7 @@ public class SectorTransferService {
 
         executor.shutdownNow();
     }
+
 
     private void subscribeLoop() {
         while (running) {
@@ -87,7 +102,6 @@ public class SectorTransferService {
 
                 jedis.subscribe(subscriber, CHANNEL);
 
-
             } catch (Exception e) {
                 if (running) {
                     e.printStackTrace();
@@ -97,7 +111,6 @@ public class SectorTransferService {
                 activeSubscriber = null;
             }
 
-
             if (!running) break;
 
             try {
@@ -106,12 +119,11 @@ public class SectorTransferService {
                 Thread.currentThread().interrupt();
                 break;
             }
-
         }
-    };
+    }
+
 
     private void handleTransferEvent(String json) {
-
         try {
             SectorTransferData data = gson.fromJson(json, SectorTransferData.class);
 
@@ -120,6 +132,7 @@ public class SectorTransferService {
             if (data.sourceServer().isBlank() || data.targetServer().isBlank() || data.dimension().isBlank() || !Double.isFinite(data.x()) || !Double.isFinite(data.y()) || !Double.isFinite(data.z()) || !Float.isFinite(data.yaw()) || !Float.isFinite(data.pitch())) return;
 
             Optional<Player> optionalPlayer = proxy.getPlayer(data.playerUuid());
+
             if (optionalPlayer.isEmpty()) return;
 
             Player player = optionalPlayer.get();
@@ -129,7 +142,6 @@ public class SectorTransferService {
             String currentServer = player.getCurrentServer().get().getServerInfo().getName();
 
             if (!currentServer.equals(data.sourceServer())) return;
-
 
             Optional<RegisteredServer> optionalTarget = proxy.getServer(data.targetServer());
 
@@ -142,29 +154,39 @@ public class SectorTransferService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
+
 
     private void executeTransfer(Player player, RegisteredServer targetServer, SectorTransferData data) {
         transferExecutor.execute(() -> {
+
+            String key = PENDING_PREFIX + data.playerUuid();
+            String json = gson.toJson(data);
+
             try (Jedis jedis = redisManager.getConnection()) {
-                jedis.setex("goliath:sector:transfer:pending:" + data.playerUuid(), 30, gson.toJson(data));
+
+                jedis.setex(key, 30, json);
 
                 player.createConnectionRequest(targetServer).connect().whenComplete((result, throwable) -> {
-                            if (throwable != null || !result.isSuccessful()) {
-                                try (Jedis cleanup = redisManager.getConnection()) {
-                                    cleanup.del("goliath:sector:transfer:pending:" + data.playerUuid());
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
+                    if (throwable != null || result == null || !result.isSuccessful()) {
+
+                        try (Jedis cleanup = redisManager.getConnection()) {
+                            cleanup.eval(DELETE_IF_MATCHES, List.of(key), List.of(json));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
+
+                try (Jedis cleanup = redisManager.getConnection()) {
+                    cleanup.eval(DELETE_IF_MATCHES, List.of(key), List.of(json));
+                } catch (Exception cleanupException) {
+                    cleanupException.printStackTrace();
+                }
             }
         });
     }
-
-
-
 }
