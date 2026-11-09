@@ -34,6 +34,7 @@ import ch.mcserver.goliath.player.session.ProxyPlayerSessionManager;
 import ch.mcserver.goliath.pluginmessenger.CommandUpdateMessenger;
 import ch.mcserver.goliath.pluginmessenger.GmspMessenger;
 import ch.mcserver.goliath.pluginmessenger.GoliathTeleportMessenger;
+import ch.mcserver.goliath.rtp.RandomTeleportService;
 import ch.mcserver.goliath.sector.SectorTransferService;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
@@ -100,6 +101,8 @@ public class Goliath {
     private ServerHeartbeatService serverHeartbeatService;
 
     private SectorTransferService sectorTransferService;
+    private RandomTeleportService randomTeleportService;
+
 
     public static ConfigurationNode config;
     public static final Logger LOGGER = LoggerFactory.getLogger(Goliath.class);
@@ -179,6 +182,9 @@ public class Goliath {
         anticheatFlagSubscriber.start();
         networkPlayerRegistryService = new NetworkPlayerRegistryService(proxy, this, redisManager);
         networkPlayerRegistryService.start();
+
+        this.randomTeleportService = new RandomTeleportService(proxy, redisManager);
+        randomTeleportService.start();
 
         GmspMessenger gmspMessenger = new GmspMessenger(proxy);
 
@@ -479,6 +485,7 @@ public class Goliath {
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         punishRedisService.stop();
+        randomTeleportService.stop();
         sectorTransferService.stop();
         networkPlayerRegistryService.stop();
         serverHeartbeatService.setStatus(ServerStatus.STOPPING);

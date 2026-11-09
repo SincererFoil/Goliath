@@ -172,8 +172,14 @@ public class RandomTeleportService {
                         );
 
                         if (!Objects.equals(server.region(), data.region().name())) continue;
-                        if (!Objects.equals(server.dimension(), data.dimension())) continue;
-                        if (!"ONLINE".equals(server.status())) continue;
+                        String dimension = switch (data.dimension()) {
+                            case "NORMAL" -> "OVERWORLD";
+                            case "NETHER" -> "NETHER";
+                            case "THE_END" -> "END";
+                            default -> null;
+                        };
+
+                        if (!Objects.equals(server.dimension(), dimension)) continue;                        if (!"ONLINE".equals(server.status())) continue;
                         if (server.serverName() == null || server.serverName().isBlank()) continue;
                         if (server.timestamp() > System.currentTimeMillis()) continue;
                         if (System.currentTimeMillis() - server.timestamp() > HEARTBEAT_TIMEOUT) continue;
@@ -198,8 +204,7 @@ public class RandomTeleportService {
             return;
         }
 
-        ServerData serverData = possibleServers.stream().max(Comparator.comparingDouble(ServerData::tps).thenComparing(Comparator.comparingDouble(ServerData::mspt).reversed()))
-                .orElse(null);
+        ServerData serverData = possibleServers.stream().max(Comparator.comparingDouble(ServerData::tps).thenComparing(Comparator.comparingDouble(ServerData::mspt).reversed())).orElse(null);
 
         if (serverData == null) {
             publishError(data);
@@ -223,18 +228,9 @@ public class RandomTeleportService {
         try {
             if (json == null || json.isBlank()) return;
 
-            RandomTeleportTransferData transferData = gson.fromJson(
-                    json,
-                    RandomTeleportTransferData.class
-            );
+            RandomTeleportTransferData transferData = gson.fromJson(json, RandomTeleportTransferData.class);
 
-            if (transferData == null
-                    || transferData.requestData() == null
-                    || transferData.requestData().requestUuid() == null
-                    || transferData.requestData().playerUuid() == null
-                    || transferData.requestData().sourceServer() == null
-                    || transferData.server() == null
-                    || transferData.server().isBlank()) {
+            if (transferData == null || transferData.requestData() == null || transferData.requestData().requestUuid() == null || transferData.requestData().playerUuid() == null || transferData.requestData().sourceServer() == null || transferData.server() == null || transferData.server().isBlank()) {
                 return;
             }
 
@@ -259,9 +255,9 @@ public class RandomTeleportService {
 
             RegisteredServer server = optionalServer.get();
 
-            player.createConnectionRequest(server)
-                    .connectWithIndication()
-                    .whenComplete((success, throwable) -> {
+            if (data.sourceServer().equals(server.getServerInfo().getName())) return;
+
+            player.createConnectionRequest(server).connectWithIndication().whenComplete((success, throwable) -> {
                         if (throwable != null || !Boolean.TRUE.equals(success)) {
                             if (throwable != null) {
                                 throwable.printStackTrace();
